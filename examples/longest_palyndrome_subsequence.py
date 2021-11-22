@@ -3,6 +3,8 @@
 Uses the generic dynamic programming function to solve the
 Longest Palyndrome Subsequence problem.
 
+See here: https://www.youtube.com/watch?v=Tw1k46ywN6E
+
 The states are pairs (i,j), where i,j are indices. 
 Each pair (i,j) represents the longest palyndromic subsequence in the substring i, i+1, ..., j-1.
 
