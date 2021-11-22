@@ -83,7 +83,11 @@ def max_value_solution(
                 open_states.append(next_state)
     logger.info("Processed %d states", num_of_processed_states)
     best_final_state = max(list(final_states()), key=lambda state:map_state_to_value[state])
-    return (best_final_state, map_state_to_value[best_final_state], map_state_to_data[best_final_state])
+    return (
+        best_final_state, 
+        map_state_to_value[best_final_state], 
+        map_state_to_data[best_final_state],
+        num_of_processed_states)
 
 
 

@@ -41,7 +41,7 @@ def max_value(string:str):
         yield (0,lenstr)
     return dynprog.max_value(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
 
-def max_value_solution(string:str):
+def max_value_solution(string:str,count_states=False):
     """
     Finds the longest palyndromic subsequence in the given string.
 
@@ -50,13 +50,13 @@ def max_value_solution(string:str):
 
     >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_value_solution("a")
-    (1, 'a')
+    'a'
     >>> max_value_solution("bb")
-    (2, 'bb')
+    'bb'
     >>> max_value_solution("abcdba")
-    (5, 'abcba')
+    'abcba'
     >>> max_value_solution("programming")
-    (4, 'gmmg')
+    'gmmg'
     """
     lenstr = len(string)
     def initial_states():  # only state and value
@@ -73,11 +73,15 @@ def max_value_solution(string:str):
                 yield ((i,j+1),value,data)
     def final_states():
         yield (0,lenstr)
-    (state, value, data) = dynprog.max_value_solution(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
-    return (value, data)
-    
+    (state, value, data, num_of_states) = dynprog.max_value_solution(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
+    return (state,value,data,num_of_states) if count_states else data
+
 
 if __name__=="__main__":
     import doctest
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
+
+    print(max_value("programming"))
+    print(max_value_solution("programming"))
+    print(max_value_solution("programming", count_states=True))
