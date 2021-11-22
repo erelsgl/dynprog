@@ -14,18 +14,18 @@ import dynprog
 from typing import *
 
 
-def max_value(string:str):
+def LPS_length(string:str):
     """
     Returns the length of the longest palyndromic subsequence in the given string.
     Does *not* return the string itself - see below.
 
-    >>> max_value("a")
+    >>> LPS_length("a")
     1
-    >>> max_value("bb")
+    >>> LPS_length("bb")
     2
-    >>> max_value("abcdba")
+    >>> LPS_length("abcdba")
     5
-    >>> max_value("programming")
+    >>> LPS_length("programming")
     4
     """
     lenstr = len(string)
@@ -43,17 +43,17 @@ def max_value(string:str):
         yield (0,lenstr)
     return dynprog.max_value(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
 
-def max_value_solution(string:str,count_states=False):
+def LPS_string(string:str,count_states=False):
     """
     Finds the longest palyndromic subsequence in the given string.
 
-    >>> max_value_solution("a")
+    >>> LPS_string("a")
     'a'
-    >>> max_value_solution("bb")
+    >>> LPS_string("bb")
     'bb'
-    >>> max_value_solution("abcdba")
+    >>> LPS_string("abcdba")
     'abcba'
-    >>> max_value_solution("programming")
+    >>> LPS_string("programming")
     'gmmg'
     """
     lenstr = len(string)
@@ -82,6 +82,6 @@ if __name__=="__main__":
     print ("{} failures, {} tests".format(failures,tests))
 
     dynprog.logger.setLevel(logging.INFO)
-    print(max_value("programming"))
-    print(max_value_solution("programming"))
-    print(max_value_solution("programming", count_states=True))
+    print(LPS_length("programming"))
+    print(LPS_string("programming"))
+    print(LPS_string("programming", count_states=True))
