@@ -2,6 +2,8 @@
 Generic dynamic programming in the iterative method.
 Uses an abstract class interface.
 
+-- NOT MAINTAINTED -- please use the function-based interface.
+
 Programmer: Erel Segal-Halevi.
 Since: 2021-11.
 """

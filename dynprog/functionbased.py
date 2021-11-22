@@ -35,8 +35,8 @@ def max_value(
     while len(open_states)>0:
         current_state:State = open_states.pop(0)
         current_value = map_state_to_value[current_state]
+        logger.info("Processing state %s with value %s", current_state,current_value)
         num_of_processed_states += 1
-        logger.info("Opening state %s with value %s", current_state,current_value)
         for (next_state,next_value) in neighbors(current_state, current_value):
             if next_state in map_state_to_value: 
                 map_state_to_value[next_state] = max(map_state_to_value[next_state], next_value)
@@ -69,12 +69,14 @@ def max_value_solution(
         current_value = map_state_to_value[current_state]
         current_data  = map_state_to_data[current_state]
         num_of_processed_states += 1
-        logger.info("Opening state %s with value %s and data %s", current_state,current_value,current_data)
+        logger.info("Processing state %s with value %s and data %s", current_state,current_value,current_data)
         for (next_state,next_value,next_data) in neighbors(current_state, current_value, current_data):
             if next_state in map_state_to_value: 
                 if next_value > map_state_to_value[next_state]:
+                    logger.info("Improving state %s to value %s and data %s", next_state,next_value,next_data)
                     map_state_to_value[next_state] = next_value
                     map_state_to_data[next_state]  = next_data
+                pass
             else:
                 map_state_to_value[next_state] = next_value
                 map_state_to_data[next_state] = next_data
@@ -83,56 +85,6 @@ def max_value_solution(
     best_final_state = max(list(final_states()), key=lambda state:map_state_to_value[state])
     return (best_final_state, map_state_to_value[best_final_state], map_state_to_data[best_final_state])
 
-
-
-# def dynprog(
-#     initial_states: Set[StateValueData], 
-#     neighbors:      Callable[[StateValueData], Generator[StateValueData, None, None]],
-#     final_state: State = None,
-#     is_final_state: Callable[[State], bool] = None
-#     ):
-#     open_states = list(initial_states)
-#     map_state_to_previous = {state:None for (state,value,data) in initial_states}
-#     map_state_to_value = {state:value for (state,value,data) in initial_states}
-#     if is_final_state is None:
-#         is_final_state = lambda state: (state==final_state)
-#     # print("final_state", final_state, "is_final_state", is_final_state((0,5)))
-#     reached_final_states = []
-#     num_of_processed_states = 0
-#     while True:
-#         if len(open_states)==0:
-#             logger.info("No more open states")
-#             break
-#         current_state_value_data:StateValueData = open_states.pop(0)
-#         num_of_processed_states += 1
-#         (current_state,current_value,current_data) = current_state_value_data
-#         logger.info("Opening state %s with value %s and data %s", current_state,current_value,current_data)
-#         if is_final_state(current_state):
-#             logger.info("State %s is final", current_state)
-#             reached_final_states.append(current_state_value_data)
-#         for next_state_value_data in neighbors(*current_state_value_data):
-#             (next_state,next_value,next_data) = next_state_value_data
-#             if next_state in map_state_to_previous: 
-#                 continue
-#             open_states.append(next_state_value_data)
-#             map_state_to_previous[next_state] = current_state_value_data
-
-#     logger.info("Processed %d states", num_of_processed_states)
-#     best_final_state_value_data = max(reached_final_states, key=lambda s: s[1])
-#     current_state_value_data = best_final_state_value_data
-#     path = []
-#     while True:
-#         logger.info("%s <-- ", current_state_value_data)
-#         (current_state,_,_) = current_state_value_data
-#         path.insert(0, current_state)
-#         previous = map_state_to_previous[current_state]
-#         if previous==None:
-#             logger.info("Start")
-#             break
-#         else:
-#             current_state_value_data = previous
-#     # logger.info("Path: %s", path)
-#     return best_final_state_value_data
 
 
 if __name__=="__main__":

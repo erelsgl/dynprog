@@ -10,13 +10,15 @@ def max_value(string:str):
     Does *not* return the string itself - see below.
 
     >>> import sys, logging
-    >>> dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
+    >>> #dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
 
     >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_value("a")
     1
+    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_value("bb")
     2
+    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_value("abcdba")
     5
     >>> max_value("programming")
