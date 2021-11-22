@@ -21,10 +21,21 @@ logger = logging.getLogger(__name__)
 def max_value(
     initial_states: Generator[StateValue, None, None], 
     neighbors:      Callable[[StateValue], Generator[StateValue, None, None]],
-    final_states:   Generator[State, None, None], 
+    final_states:   Generator[State, None, None] = None,
+    is_final_state: Callable[[State],bool] = None,
     ):
     """
     This is a simple function that only returns the maximum value - it does not return the optimum solution.
+
+    The initial states are determined by the argument:
+    * inital_states: a generator function, that generates tuples of the form (state,value) for all initial states.
+
+    The neighbors of each state are determined by the argument:
+    * neighbors:     a generator function, that generates tuples of the form (state,value) for all neighbors of the given state.
+
+    The final states are determined by one of the following arguments (you should send one of them):
+    * final_states:   a generator function, that generates all final states.
+    * is_final_state: returns True iff the given state is final. 
     """
     open_states = []
     map_state_to_value = dict()
@@ -39,22 +50,41 @@ def max_value(
         num_of_processed_states += 1
         for (next_state,next_value) in neighbors(current_state, current_value):
             if next_state in map_state_to_value: 
-                map_state_to_value[next_state] = max(map_state_to_value[next_state], next_value)
+                if next_value is not None:
+                    map_state_to_value[next_state] = max(map_state_to_value[next_state], next_value)
             else:
                 map_state_to_value[next_state] = next_value
                 open_states.append(next_state)
     logger.info("Processed %d states", num_of_processed_states)
-    return max([map_state_to_value[state] for state in final_states()])
+    if final_states is not None:
+        return max([map_state_to_value[state] for state in final_states()])
+    elif is_final_state is not None:
+        return max([map_state_to_value[state] for state in map_state_to_value.keys() if is_final_state(state)])
+    else:
+        raise ValueError("Either final_states or is_final_state must be given")
+
 
 
 
 def max_value_solution(
     initial_states: Generator[StateValueData, None, None], 
     neighbors:      Callable[[StateValueData], Generator[StateValueData, None, None]],
-    final_states:   Generator[State, None, None], 
+    final_states:   Generator[State, None, None] = None,
+    is_final_state: Callable[[State],bool] = None,
     ):
     """
     This function returns both the maximum value and the corresponding optimum solution.
+
+    The initial states are determined by the argument:
+    * inital_states: a generator function, that generates tuples of the form (state,value,data) for all initial states.
+
+    The neighbors of each state are determined by the argument:
+    * neighbors:     a generator function, that generates tuples of the form (state,value,data) for all neighbors of the given state.
+
+    The final states are determined by one of the following arguments (you should send one of them):
+    * final_states:   a generator function, that generates all final states.
+    * is_final_state: returns True iff the given state is final. 
+
     """
     open_states = []
     map_state_to_value = dict()
@@ -72,7 +102,7 @@ def max_value_solution(
         logger.info("Processing state %s with value %s and data %s", current_state,current_value,current_data)
         for (next_state,next_value,next_data) in neighbors(current_state, current_value, current_data):
             if next_state in map_state_to_value: 
-                if next_value > map_state_to_value[next_state]:
+                if next_value is not None and next_value > map_state_to_value[next_state]:
                     logger.info("Improving state %s to value %s and data %s", next_state,next_value,next_data)
                     map_state_to_value[next_state] = next_value
                     map_state_to_data[next_state]  = next_data
@@ -82,7 +112,12 @@ def max_value_solution(
                 map_state_to_data[next_state] = next_data
                 open_states.append(next_state)
     logger.info("Processed %d states", num_of_processed_states)
-    best_final_state = max(list(final_states()), key=lambda state:map_state_to_value[state])
+    if final_states is not None:
+        best_final_state = max(list(final_states()), key=lambda state:map_state_to_value[state])
+    elif is_final_state is not None:
+        best_final_state = max(map_state_to_value.keys(), key=lambda state:map_state_to_value[state])
+    else:
+        raise ValueError("Either final_states or is_final_state must be given")
     return (
         best_final_state, 
         map_state_to_value[best_final_state], 
