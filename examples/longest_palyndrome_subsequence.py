@@ -19,13 +19,10 @@ def max_value(string:str):
     Returns the length of the longest palyndromic subsequence in the given string.
     Does *not* return the string itself - see below.
 
-    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_value("a")
     1
-    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_value("bb")
     2
-    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_value("abcdba")
     5
     >>> max_value("programming")
@@ -50,7 +47,6 @@ def max_value_solution(string:str,count_states=False):
     """
     Finds the longest palyndromic subsequence in the given string.
 
-    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_value_solution("a")
     'a'
     >>> max_value_solution("bb")
@@ -85,6 +81,7 @@ if __name__=="__main__":
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
+    dynprog.logger.setLevel(logging.INFO)
     print(max_value("programming"))
     print(max_value_solution("programming"))
     print(max_value_solution("programming", count_states=True))

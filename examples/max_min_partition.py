@@ -20,13 +20,10 @@ def max_min_value(items:list, parts:int):
     """
     Returns the max-min value - does *not* return the partition itself.
 
-    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_min_value([1,2,3,4], 2)
     5
-    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_min_value([1,2,3,4,5], 2)
     7
-    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_min_value([11,22,33,44,55,66,77,88,99], 3)
     165
     """
@@ -53,13 +50,10 @@ def max_min_partition(items:list, parts:int):
     """
     Returns the max-min partition.
 
-    >>> dynprog.logger.setLevel(logging.INFO)
     >>> max_min_partition([1,2,3,4], 2)
     (5, [[1, 4], [2, 3]])
-    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_min_partition([1,2,3,4,5], 2)
     (7, [[1, 2, 4], [3, 5]])
-    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> max_min_partition([11,22,33,44,55,66,77,88,99], 3)
     (165, [[11, 22, 33, 44, 55], [66, 99], [77, 88]])
     """
@@ -98,5 +92,6 @@ if __name__=="__main__":
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
+    dynprog.logger.setLevel(logging.INFO)
     print(max_min_value(5*[11]+5*[23], 2))
     print(max_min_partition(5*[11]+5*[23], 2))
