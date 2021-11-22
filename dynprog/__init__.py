@@ -5,6 +5,4 @@ Programmer: Erel Segal-Halevi.
 Since: 2021-11.
 """
 
-
-def dynprog():
-    pass
+from dynprog.functionbased import *
