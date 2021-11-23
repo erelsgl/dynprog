@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 def utilitarian_envyfree_value(valuation_matrix):
     """
-    Returns the maximum utilitarian value in a envyfree allocation - does *not* return the partition itself.
-    Returns -inf if there is no envyfree allocation.
+    Returns the maximum utilitarian value in an envy-free allocation - does *not* return the allocation itself.
+    Returns -inf if there is no envy-free allocation.
 
     >>> logger.setLevel(logging.WARNING)
     >>> dynprog.logger.setLevel(logging.WARNING)
@@ -33,7 +33,7 @@ def utilitarian_envyfree_value(valuation_matrix):
     154.0
     >>> utilitarian_envyfree_value([[11,0,11,11],[0,11,11,11],[33,33,33,33]])
     88.0
-    >>> utilitarian_envyfree_value([[11],[22]])  # no envyfree allocation
+    >>> utilitarian_envyfree_value([[11],[22]])  # no envy-free allocation
     -inf
     """
     # Algorithm: add the items one by one to all possible bundles.
@@ -72,8 +72,9 @@ def utilitarian_envyfree_value(valuation_matrix):
 
 # def utilitarian_envyfree_allocation(valuation_matrix):
 #     """
-#     Returns the utilitarian-maximum envyfree allocation and its utilitarian value.
-
+#     Returns the utilitarian-maximum envy-free allocation and its utilitarian value.
+#     Raises an exception if there is no envy-free allocation.
+#
 #     >>> dynprog.logger.setLevel(logging.WARNING)
 #     >>> utilitarian_envyfree_allocation([[11,0,11],[0,11,22]])
 #     (44, [[0], [1, 2]])

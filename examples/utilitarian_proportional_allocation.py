@@ -64,6 +64,7 @@ def utilitarian_proportional_value(valuation_matrix):
 def utilitarian_proportional_allocation(valuation_matrix):
     """
     Returns the utilitarian-maximum proportional allocation and its utilitarian value.
+    Raises an exception if there is no proportional allocation.
 
     >>> dynprog.logger.setLevel(logging.WARNING)
     >>> utilitarian_proportional_allocation([[11,0,11],[0,11,22]])
