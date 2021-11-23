@@ -27,13 +27,13 @@ def utilitarian_proportional_value(valuation_matrix):
 
     >>> dynprog.logger.setLevel(logging.WARNING)
     >>> logger.setLevel(logging.WARNING)
-    >>> utilitarian_proportional_value([[11,0,11],[0,11,22]])
-    44
+    >>> utilitarian_proportional_value([[11,0,11],[33,44,55]])
+    110
     >>> utilitarian_proportional_value([[11,22,33,44],[44,33,22,11]])
     154
     >>> utilitarian_proportional_value([[11,0,11,11],[0,11,11,11],[33,33,33,33]])
     88
-    >>> utilitarian_proportional_value([[11],[11]])  # no proportional allocation
+    >>> utilitarian_proportional_value([[11],[22]])  # no proportional allocation
     -inf
     """
     # Algorithm: add the items one by one to all possible bundles.
@@ -72,8 +72,6 @@ def utilitarian_proportional_allocation(valuation_matrix):
     (154, [[2, 3], [0, 1]])
     >>> utilitarian_proportional_allocation([[11,0,11,11],[0,11,11,11],[33,33,33,33]])
     (88, [[0], [1], [2, 3]])
-    >>> #dynprog.logger.setLevel(logging.INFO)
-    >>> #logger.setLevel(logging.INFO)
     >>> utilitarian_proportional_allocation([[11],[11]]) 
     Traceback (most recent call last):
     ...
@@ -81,7 +79,7 @@ def utilitarian_proportional_allocation(valuation_matrix):
     >>> utilitarian_proportional_allocation([[37,20,34,12,71,17,55,97,79],[57,5,59,63,92,23,4,36,69],[16,3,41,42,68,47,60,39,17]])
     (556, [[1, 7, 8], [0, 3, 4], [2, 5, 6]])
     """
-    # Algorithm: add the numbers one by one to all possible bundles.
+    # Algorithm: add the items one by one to all possible bundles.
     num_of_agents   = len(valuation_matrix)
     num_of_items    = len(valuation_matrix[0])
     thresholds = [sum(valuation_matrix[i])/num_of_agents for i in range(num_of_agents)]
