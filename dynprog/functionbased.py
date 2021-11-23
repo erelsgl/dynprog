@@ -115,7 +115,7 @@ def max_value_solution(
     if final_states is not None:
         best_final_state = max(list(final_states()), key=lambda state:map_state_to_value[state])
     elif is_final_state is not None:
-        best_final_state = max(map_state_to_value.keys(), key=lambda state:map_state_to_value[state])
+        best_final_state = max([state for state in map_state_to_value.keys() if is_final_state(state)], key=lambda state:map_state_to_value[state])
     else:
         raise ValueError("Either final_states or is_final_state must be given")
     return (
