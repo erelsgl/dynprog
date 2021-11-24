@@ -1,7 +1,7 @@
 #!python3
 
 """
-Uses the generic dynamic programming function to find a prop1 allocation
+Uses the generic dynamic programming function to find a PROP1 or PROPx allocation
 of items to agents with different valuations, with a largest sum of utilities (utilitarian value).
 
 The input is a valuation-matrix v, where v[i][j] is the value of agent i to item j.
@@ -14,24 +14,32 @@ Programmer: Erel Segal-Halevi
 Since: 2021-11
 """
 
-import dynprog, math, logging, itertools
+import dynprog, math, logging
 from typing import *
 
 logger = logging.getLogger(__name__)
 
 
-def utilitarian_prop1_value(valuation_matrix):
+def utilitarian_prop1_value(valuation_matrix, propx=False):
     """
     Returns the maximum utilitarian value in a PROP1 allocation - does *not* return the partition itself.
 
     >>> dynprog.logger.setLevel(logging.WARNING)
     >>> utilitarian_prop1_value([[11,0,11],[33,44,55]])
     132
+    >>> utilitarian_prop1_value([[11,0,11],[33,44,55]],propx=True)
+    110
     >>> utilitarian_prop1_value([[11,22,33,44],[44,33,22,11]])
+    154
+    >>> utilitarian_prop1_value([[11,22,33,44],[44,33,22,11]],propx=True)
     154
     >>> utilitarian_prop1_value([[11,0,11,11],[0,11,11,11],[33,33,33,33]])
     132
+    >>> utilitarian_prop1_value([[11,0,11,11],[0,11,11,11],[33,33,33,33]],propx=True)
+    88
     >>> utilitarian_prop1_value([[11],[22]]) 
+    22
+    >>> utilitarian_prop1_value([[11],[22]],propx=True)
     22
     """
     num_of_agents   = len(valuation_matrix)
@@ -42,7 +50,8 @@ def utilitarian_prop1_value(valuation_matrix):
         return all([bundle_values[i] + largest_value_owned_by_others[i] >= thresholds[i] for i in range(num_of_agents)])
     def initial_states():  # returns (state,value) tuples
         zero_values = num_of_agents*(0,)
-        largest_value_owned_by_others = num_of_agents*(0,)
+        initial_value_to_remove = math.inf if propx else 0
+        largest_value_owned_by_others = num_of_agents*(initial_value_to_remove,)
         yield ( (0, zero_values, largest_value_owned_by_others), -math.inf)
     def neighbors (state:Tuple[int,tuple,tuple], value:int):   # returns (state,value) tuples
         (item_index, bundle_values, largest_value_owned_by_others) = state
@@ -58,7 +67,11 @@ def utilitarian_prop1_value(valuation_matrix):
                 for other_agent_index in range(num_of_agents):
                     if other_agent_index!=agent_index:
                         other_agent_value = valuation_matrix[other_agent_index][item_index]
-                        if other_agent_value > new_largest_value_owned_by_others[other_agent_index]:
+                        if propx:
+                            replace_item = other_agent_value < new_largest_value_owned_by_others[other_agent_index]
+                        else: # prop1
+                            replace_item = other_agent_value > new_largest_value_owned_by_others[other_agent_index]
+                        if replace_item:
                             new_largest_value_owned_by_others[other_agent_index] = other_agent_value
                 
                 # Check PROP1:
@@ -76,21 +89,31 @@ def utilitarian_prop1_value(valuation_matrix):
     return value
 
 
-def utilitarian_prop1_allocation(valuation_matrix):
+def utilitarian_prop1_allocation(valuation_matrix, propx=False):
     """
     Returns the utilitarian-maximum PROP1 allocation and its utilitarian value.
 
     >>> dynprog.logger.setLevel(logging.WARNING)
     >>> utilitarian_prop1_allocation([[11,0,11],[33,44,55]])
     (132, [[], [0, 1, 2]])
+    >>> utilitarian_prop1_allocation([[11,0,11],[33,44,55]], propx=True)
+    (110, [[0], [1, 2]])
     >>> utilitarian_prop1_allocation([[11,22,33,44],[44,33,22,11]])
+    (154, [[2, 3], [0, 1]])
+    >>> utilitarian_prop1_allocation([[11,22,33,44],[44,33,22,11]], propx=True)
     (154, [[2, 3], [0, 1]])
     >>> utilitarian_prop1_allocation([[11,0,11,11],[0,11,11,11],[33,33,33,33]])
     (132, [[], [], [0, 1, 2, 3]])
+    >>> utilitarian_prop1_allocation([[11,0,11,11],[0,11,11,11],[33,33,33,33]], propx=True)
+    (88, [[0], [1], [2, 3]])
     >>> utilitarian_prop1_allocation([[11],[22]]) 
     (22, [[], [0]])
-    >>> #utilitarian_prop1_allocation([[37,20,34,12,71,17,55,97,79],[57,5,59,63,92,23,4,36,69],[16,3,41,42,68,47,60,39,17]])
-    (556, [[1, 7, 8], [0, 3, 4], [2, 5, 6]])
+    >>> utilitarian_prop1_allocation([[11],[22]], propx=True)
+    (22, [[], [0]])
+    >>> utilitarian_prop1_allocation([[37,20,34,12,71,17,55,97,79],[57,5,59,63,92,23,4,36,69],[16,3,41,42,68,47,60,39,17]])
+    (574, [[1, 7, 8], [0, 2, 3, 4], [5, 6]])
+    >>> utilitarian_prop1_allocation([[37,20,34,12,71,17,55,97,79],[57,5,59,63,92,23,4,36,69],[16,3,41,42,68,47,60,39,17]], propx=True)
+    (557, [[7, 8], [0, 2, 3, 4], [1, 5, 6]])
     """
     num_of_agents   = len(valuation_matrix)
     num_of_items    = len(valuation_matrix[0])
@@ -101,7 +124,8 @@ def utilitarian_prop1_allocation(valuation_matrix):
     def initial_states():  # returns (state,value,data) tuples
         zero_values = num_of_agents*(0,)
         empty_allocation = num_of_agents*([],)
-        largest_value_owned_by_others = num_of_agents*(0,)
+        initial_value_to_remove = math.inf if propx else 0
+        largest_value_owned_by_others = num_of_agents*(initial_value_to_remove,)
         yield ( (0, zero_values, largest_value_owned_by_others), -math.inf, empty_allocation)
     def neighbors (state:Tuple[int,tuple], value:int, allocation:list):   # returns (state,value,data) tuples
         (item_index, bundle_values, largest_value_owned_by_others) = state
@@ -118,7 +142,11 @@ def utilitarian_prop1_allocation(valuation_matrix):
                 for other_agent_index in range(num_of_agents):
                     if other_agent_index!=agent_index:
                         other_agent_value = valuation_matrix[other_agent_index][item_index]
-                        if other_agent_value > new_largest_value_owned_by_others[other_agent_index]:
+                        if propx:
+                            replace_item = other_agent_value < new_largest_value_owned_by_others[other_agent_index]
+                        else: # prop1
+                            replace_item = other_agent_value > new_largest_value_owned_by_others[other_agent_index]
+                        if replace_item:
                             new_largest_value_owned_by_others[other_agent_index] = other_agent_value
                 
                 # Check PROP1:
@@ -153,7 +181,7 @@ if __name__=="__main__":
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.logger.setLevel(logging.INFO)
+    dynprog.logger.setLevel(logging.WARNING)
     import numpy as np
     # valuation_matrix = np.random.randint(0,99, [3,6])   # ~ 1000 states
     valuation_matrix = np.random.randint(0,99, [3,7])   # ~ 3000 states

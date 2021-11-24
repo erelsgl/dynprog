@@ -1,7 +1,7 @@
 #!python3
 
 """
-Uses the generic dynamic programming function to find a ef1 allocation
+Uses the generic dynamic programming function to find an EF1/EFx allocation
 of items to agents with different valuations, with a largest sum of utilities (utilitarian value).
 
 The input is a valuation-matrix v, where v[i][j] is the value of agent i to item j.
@@ -20,19 +20,31 @@ from typing import *
 logger = logging.getLogger(__name__)
 
 
-def utilitarian_ef1_value(valuation_matrix):
+def utilitarian_ef1_value(valuation_matrix, efx=False):
     """
     Returns the maximum utilitarian value in a ef1 allocation - does *not* return the partition itself.
 
     >>> dynprog.logger.setLevel(logging.WARNING)
     >>> utilitarian_ef1_value([[11,0,11],[33,44,55]])
     110.0
+    >>> utilitarian_ef1_value([[11,0,11],[33,44,55]],efx=True)
+    110.0
     >>> utilitarian_ef1_value([[11,22,33,44],[44,33,22,11]])
     154.0
+    >>> utilitarian_ef1_value([[11,22,33,44],[44,33,22,11]],efx=True)
+    154.0
     >>> utilitarian_ef1_value([[11,0,11,11],[0,11,11,11],[33,33,33,33]])
-    80.0
+    88.0
+    >>> utilitarian_ef1_value([[11,0,11,11],[0,11,11,11],[33,33,33,33]],efx=True)
+    88.0
     >>> utilitarian_ef1_value([[11],[22]]) 
     22.0
+    >>> utilitarian_ef1_value([[11],[22]],efx=True)
+    22.0
+    >>> utilitarian_ef1_value([[98,91,29,50,76,94],[43,67,93,35,49,12],[45,10,62,47,82,60]])
+    505.0
+    >>> utilitarian_ef1_value([[98,91,29,50,76,94],[43,67,93,35,49,12],[45,10,62,47,82,60]],efx=True)
+    481.0
     """
     num_of_agents   = len(valuation_matrix)
     num_of_items    = len(valuation_matrix[0])
@@ -41,7 +53,8 @@ def utilitarian_ef1_value(valuation_matrix):
             for i in range(num_of_agents) for j in range(num_of_agents)])
     def initial_states():  # returns (state,value) tuples
         zero_values = num_of_agents * (num_of_agents*(0,),)
-        largest_value_owned_by_others = num_of_agents * (num_of_agents*(0,),)
+        initial_value_to_remove = math.inf if efx else 0
+        largest_value_owned_by_others = num_of_agents * (num_of_agents*(initial_value_to_remove,),)
         yield ( (0, zero_values, largest_value_owned_by_others), -math.inf)
     def neighbors (state:Tuple[int,tuple,tuple], value:int):   # returns (state,value) tuples
         (item_index, bundle_differences, largest_value_owned_by_others) = state
@@ -61,7 +74,11 @@ def utilitarian_ef1_value(valuation_matrix):
                 for other_agent_index in range(num_of_agents):
                     if other_agent_index==agent_index: continue
                     other_agent_value = valuation_matrix[other_agent_index][item_index]
-                    if other_agent_value > new_largest_value_owned_by_others[other_agent_index][agent_index]:
+                    if efx:
+                        replace_item = other_agent_value < new_largest_value_owned_by_others[other_agent_index][agent_index]
+                    else: # ef1
+                        replace_item = other_agent_value > new_largest_value_owned_by_others[other_agent_index][agent_index]
+                    if replace_item:
                         new_largest_value_owned_by_others[other_agent_index][agent_index] = other_agent_value
                 new_largest_value_owned_by_others = tuple((tuple(d) for d in new_largest_value_owned_by_others))
                 
@@ -91,9 +108,10 @@ if __name__=="__main__":
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.logger.setLevel(logging.INFO)
+    dynprog.logger.setLevel(logging.WARNING)
     import numpy as np
     valuation_matrix = np.random.randint(0,99, [3,6])   # ~ 1093 states
     # valuation_matrix = np.random.randint(0,99, [3,7])   # ~ 3280 states
     print("valuation_matrix:\n",valuation_matrix)
-    print(utilitarian_ef1_value(valuation_matrix))
+    print("EF1: ",utilitarian_ef1_value(valuation_matrix))
+    print("EFx: ",utilitarian_ef1_value(valuation_matrix,efx=True))
