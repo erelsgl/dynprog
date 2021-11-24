@@ -38,25 +38,35 @@ def utilitarian_prop1_value(valuation_matrix):
     num_of_items    = len(valuation_matrix[0])
     thresholds = [sum(valuation_matrix[i])/num_of_agents for i in range(num_of_agents)]
     logger.info("thresholds: %s", thresholds)
-    def is_prop1(bundle_values:list,unallocated_items:list)->bool:
-        return all([bundle_values[i] + valuation_matrix[i][unallocated_items[i]] >= thresholds[i] for i in range(num_of_agents)])
+    def is_prop1(bundle_values:list,largest_value_owned_by_others:list)->bool:
+        return all([bundle_values[i] + largest_value_owned_by_others[i] >= thresholds[i] for i in range(num_of_agents)])
     def initial_states():  # returns (state,value) tuples
         zero_values = num_of_agents*(0,)
-        all_item_combinations = itertools.product(range(num_of_items), repeat=num_of_agents)
-        for unallocated_items in all_item_combinations:
-            yield ( (0, zero_values, unallocated_items), -math.inf)
+        largest_value_owned_by_others = num_of_agents*(0,)
+        yield ( (0, zero_values, largest_value_owned_by_others), -math.inf)
     def neighbors (state:Tuple[int,tuple,tuple], value:int):   # returns (state,value) tuples
-        (item_index, bundle_values, unallocated_items) = state
+        (item_index, bundle_values, largest_value_owned_by_others) = state
         if item_index < num_of_items:
-            next_index = item_index+1
-            for agent_index in range(num_of_agents): # consider giving item next_index to agent agent_index
-                if unallocated_items[agent_index] != next_index:
-                    new_bundle_values = list(bundle_values)
-                    new_bundle_values[agent_index] += valuation_matrix[agent_index][item_index]
-                    state_value = -math.inf 
-                    if next_index==num_of_items and is_prop1(new_bundle_values,unallocated_items): 
-                        state_value = sum(new_bundle_values)
-                    yield ((next_index, tuple(new_bundle_values), unallocated_items), state_value)
+            next_item_index = item_index+1
+            for agent_index in range(num_of_agents): # consider giving item item_index to agent agent_index
+                # Update my value
+                new_bundle_values = list(bundle_values)
+                new_bundle_values[agent_index] += valuation_matrix[agent_index][item_index]
+
+                # Update value owned by others
+                new_largest_value_owned_by_others = list(largest_value_owned_by_others)
+                for other_agent_index in range(num_of_agents):
+                    if other_agent_index!=agent_index:
+                        other_agent_value = valuation_matrix[other_agent_index][item_index]
+                        if other_agent_value > new_largest_value_owned_by_others[other_agent_index]:
+                            new_largest_value_owned_by_others[other_agent_index] = other_agent_value
+                
+                # Check PROP1:
+                state_value = -math.inf 
+                if next_item_index==num_of_items and is_prop1(new_bundle_values,new_largest_value_owned_by_others): 
+                    state_value = sum(new_bundle_values)
+
+                yield ((next_item_index, tuple(new_bundle_values), tuple(new_largest_value_owned_by_others)), state_value)
     def is_final_state(state):
         (item_index, _, _) = state
         return item_index==num_of_items
@@ -86,28 +96,42 @@ def utilitarian_prop1_allocation(valuation_matrix):
     num_of_items    = len(valuation_matrix[0])
     thresholds = [sum(valuation_matrix[i])/num_of_agents for i in range(num_of_agents)]
     logger.info("thresholds: %s", thresholds)
-    def is_prop1(bundle_values:list,unallocated_items:list)->bool:
-        return all([bundle_values[i] + valuation_matrix[i][unallocated_items[i]] >= thresholds[i] for i in range(num_of_agents)])
+    def is_prop1(bundle_values:list,largest_value_owned_by_others:list)->bool:
+        return all([bundle_values[i] + largest_value_owned_by_others[i] >= thresholds[i] for i in range(num_of_agents)])
     def initial_states():  # returns (state,value,data) tuples
         zero_values = num_of_agents*(0,)
         empty_allocation = num_of_agents*([],)
-        all_item_combinations = itertools.product(range(num_of_items), repeat=num_of_agents)
-        for unallocated_items in all_item_combinations:
-            yield ( (0, zero_values, unallocated_items), -math.inf, empty_allocation)
+        largest_value_owned_by_others = num_of_agents*(0,)
+        yield ( (0, zero_values, largest_value_owned_by_others), -math.inf, empty_allocation)
     def neighbors (state:Tuple[int,tuple], value:int, allocation:list):   # returns (state,value,data) tuples
-        (item_index, bundle_values, unallocated_items) = state
+        (item_index, bundle_values, largest_value_owned_by_others) = state
         if item_index < num_of_items:
-            next_index = item_index+1
+            next_item_index = item_index+1
             for agent_index in range(num_of_agents):
-                if unallocated_items[agent_index] != next_index:
-                    new_bundle_values = list(bundle_values)
-                    new_bundle_values[agent_index] += valuation_matrix[agent_index][item_index]
-                    state_value = -math.inf 
-                    if next_index == num_of_items and is_prop1(new_bundle_values,unallocated_items): 
-                        state_value = sum(new_bundle_values)
-                    new_allocation = list(allocation)
-                    new_allocation[agent_index] = new_allocation[agent_index] + [item_index]
-                    yield ((next_index, tuple(new_bundle_values), unallocated_items), state_value, new_allocation)
+
+                # Update my value
+                new_bundle_values = list(bundle_values)
+                new_bundle_values[agent_index] += valuation_matrix[agent_index][item_index]
+
+                # Update value owned by others
+                new_largest_value_owned_by_others = list(largest_value_owned_by_others)
+                for other_agent_index in range(num_of_agents):
+                    if other_agent_index!=agent_index:
+                        other_agent_value = valuation_matrix[other_agent_index][item_index]
+                        if other_agent_value > new_largest_value_owned_by_others[other_agent_index]:
+                            new_largest_value_owned_by_others[other_agent_index] = other_agent_value
+                
+                # Check PROP1:
+                state_value = -math.inf 
+                if next_item_index==num_of_items and is_prop1(new_bundle_values,new_largest_value_owned_by_others): 
+                    state_value = sum(new_bundle_values)
+
+                # Update allocation:
+                new_allocation = list(allocation)
+                new_allocation[agent_index] = new_allocation[agent_index] + [item_index]
+
+                yield ((next_item_index, tuple(new_bundle_values), tuple(new_largest_value_owned_by_others)), state_value, new_allocation)
+
     def is_final_state(state):
         (item_index, _, _) = state
         return item_index==num_of_items
@@ -129,8 +153,9 @@ if __name__=="__main__":
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.logger.setLevel(logging.INFO)
     import numpy as np
-    valuation_matrix = np.random.randint(0,99, [3,6])
+    # valuation_matrix = np.random.randint(0,99, [3,6])   # ~ 1000 states
+    valuation_matrix = np.random.randint(0,99, [3,7])   # ~ 3000 states
     print("valuation_matrix:\n",valuation_matrix)
     print(utilitarian_prop1_allocation(valuation_matrix))
