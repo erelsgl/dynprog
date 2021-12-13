@@ -10,33 +10,6 @@ import dynprog
 from typing import *
 
 
-# Common definitions:
-
-_initial_states = [0]
-
-_initial_solution = []
-
-_transition_functions = [
-	lambda state,input: state+input,    # adding the input
-	lambda state,input: state+0,        # not adding the input
-]
-
-_construction_functions = [
-	lambda solution,input: solution+[input],    # adding the input
-	lambda solution,_:     solution,            # not adding the input
-]
-
-_value_function = lambda state: state
-
-def _filter_functions(capacity:int):
-	return [
-            lambda state,input: state+input<=capacity,    # adding the input
-            lambda _,__:        True,                     # not adding the input
-        ]
-
-
-# Computing the maximum value:
-
 
 def max_value(inputs: List[int], capacity:int)->int:
     """
@@ -61,9 +34,6 @@ def max_value(inputs: List[int], capacity:int)->int:
         filter_functions = _filter_functions(capacity)
     )
 
-
-
-# Computing the maximum value solution:
 
 def max_value_solution(inputs: List[int], capacity:int)->int:
     """
@@ -90,6 +60,31 @@ def max_value_solution(inputs: List[int], capacity:int)->int:
         filter_functions = _filter_functions(capacity)
     )[2]
 
+
+
+# Common definitions:
+
+_initial_states = [0]
+
+_initial_solution = []
+
+_transition_functions = [
+	lambda state,input: state+input,    # adding the input
+	lambda state,input: state+0,        # not adding the input
+]
+
+_construction_functions = [
+	lambda solution,input: solution+[input],    # adding the input
+	lambda solution,_:     solution,            # not adding the input
+]
+
+_value_function = lambda state: state
+
+def _filter_functions(capacity:int):
+	return [
+            lambda state,input: state+input<=capacity,    # adding the input
+            lambda _,__:        True,                     # not adding the input
+        ]
 
 
 

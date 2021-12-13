@@ -50,8 +50,8 @@ def max_value(
             for state in current_states
             if h(state,input)
         ]
-        logger.info("Processed input %d (%s) and added %d states: %s.", input_index, input, len(next_states), next_states)
-        # logger.info("Processed input %d (%s) and added %d states.", input_index, input, len(next_states))
+        # logger.info("Processed input %d (%s) and added %d states: %s.", input_index, input, len(next_states), next_states)
+        logger.info("Processed input %d (%s) and added %d states.", input_index, input, len(next_states))
         num_of_processed_states += len(next_states)
         current_states = next_states
     logger.info("Processed %d states.", num_of_processed_states)
