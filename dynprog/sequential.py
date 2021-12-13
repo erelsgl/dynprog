@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def max_value(
     inputs: List[Input],
-    initial_states:        List[State],                                 # S_0
+    initial_states:        Set[State],                                 # S_0
     transition_functions:  List[Callable[[State, Input], State]],       # F
     value_function:        Callable[[State], Value],                    # g
     filter_functions:      List[Callable[[State, Input], bool]]=None,   # H
@@ -38,20 +38,20 @@ def max_value(
     :param value_function:   a function that maps a state to its "value" (that should be maximized).
     :param filter_functions [optional]: a set of functions; each function maps a pair (state,input) to a boolean value which is "true" iff the new state should be added.
     """
-    current_states = initial_states
+    current_states = set(initial_states)
     if filter_functions is None:
         filter_functions = _default_filter_functions(transition_functions)
     logger.info("%d initial states, %d transition functions.", len(current_states), len(transition_functions))
     num_of_processed_states = len(current_states)
     for input_index,input in enumerate(inputs):
-        next_states = [
+        next_states = {
             f(state,input)
             for (f,h) in zip(transition_functions,filter_functions)
             for state in current_states
             if h(state,input)
-        ]
+        }
         # logger.info("Processed input %d (%s) and added %d states: %s.", input_index, input, len(next_states), next_states)
-        logger.info("Processed input %d (%s) and added %d states.", input_index, input, len(next_states))
+        logger.info("  Processed input %d (%s) and added %d states.", input_index, input, len(next_states))
         num_of_processed_states += len(next_states)
         current_states = next_states
     logger.info("Processed %d states.", num_of_processed_states)
@@ -88,20 +88,24 @@ def max_value_solution(
         state: State
         prev:  Any #StateRecord
         transition_index: int  # the index of the transition function used to go from prev to state.
+        def __hash__(self):
+            return hash(self.state)
+        def __eq__(self,other):
+            return (self.state==other.state)
 
-    current_state_records = [StateRecord(state,None,None) for state in initial_states] # Add a link to the 'previous state', which is initially None.
+    current_state_records = {StateRecord(state,None,None) for state in initial_states} # Add a link to the 'previous state', which is initially None.
     if filter_functions is None:
         filter_functions = _default_filter_functions(transition_functions)
     logger.info("%d initial states, %d transition functions.", len(current_state_records), len(transition_functions))
     num_of_processed_states = len(current_state_records)
     for input_index,input in enumerate(inputs):
-        next_state_records = [
+        next_state_records = {
             StateRecord(f(record.state,input), record, transition_index)
             for (transition_index,(f,h)) in enumerate(zip(transition_functions,filter_functions))
             for record in current_state_records
             if h(record.state, input)
-        ]
-        logger.info("Processed input %d (%s) and added %d states.", input_index, input, len(next_state_records))
+        }
+        logger.info("  Processed input %d (%s) and added %d states.", input_index, input, len(next_state_records))
         num_of_processed_states += len(next_state_records)
         current_state_records = next_state_records
     logger.info("Processed %d states.", num_of_processed_states)
@@ -125,7 +129,7 @@ def max_value_solution(
     solution = initial_solution
     for input_index,input in enumerate(inputs):
         transition_index = path[input_index]
-        logger.info("input %d (%s): transition %d", input_index, input, transition_index)
+        logger.info("  Input %d (%s): transition %d", input_index, input, transition_index)
         solution = construction_functions[transition_index](solution, input)
     
     return (best_final_state, best_final_state_value, solution, num_of_processed_states)
@@ -144,7 +148,7 @@ if __name__=="__main__":
     logger.setLevel(logging.INFO)
 
     # Example: subset sum.
-    inputs = [100,200,400,700,1100,1600,2200,2900,3700]
+    inputs = [100,200,300,400,700,1100,1600,2200,2900,3700]
     capacity = 4005
 
     print(max_value(

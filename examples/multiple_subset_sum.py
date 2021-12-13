@@ -45,7 +45,7 @@ def max_sum_solution(inputs: List[int], capacities:List[int])->int:
     >>> max_sum_solution([3,5], [2,2])
     [[], []]
     >>> max_sum_solution([3,5], [4,4])
-    [[3], []]
+    [[], [3]]
     >>> max_sum_solution([3,5], [6,6])
     [[5], [3]]
     >>> max_sum_solution([3,5], [8,8])
@@ -53,7 +53,7 @@ def max_sum_solution(inputs: List[int], capacities:List[int])->int:
     >>> max_sum_solution([100,200,400,700,1100,1600,2200,2900,3700], [2005,2006])
     [[400, 1600], [200, 700, 1100]]
     """
-    return dynprog.sequential.max_value_solution(
+    (best_state,best_value,best_solution,num_of_states) = dynprog.sequential.max_value_solution(
         inputs,
         initial_states = _initial_states(len(capacities)),
         transition_functions = _transition_functions(len(capacities)),
@@ -61,7 +61,8 @@ def max_sum_solution(inputs: List[int], capacities:List[int])->int:
 		initial_solution = _initial_solution(len(capacities)),
 		construction_functions = _construction_functions(len(capacities)),
         filter_functions = _filter_functions(capacities)
-    )[2]
+    )
+    return best_solution
 
 
 
@@ -69,7 +70,7 @@ def max_sum_solution(inputs: List[int], capacities:List[int])->int:
 
 def _initial_states(num_of_bins:int):
     zero_values = num_of_bins*(0,)
-    return [zero_values]
+    return {zero_values}
 
 def _initial_solution(num_of_bins:int):
     empty_bundles = [ [] for _ in range(num_of_bins)]
@@ -81,22 +82,22 @@ def _add_input_to_bin_sum(bin_sums:list, bin_index:int, input:int):
     """
     Adds the given input integer to bin #bin_index in the given list of bins.
     >>> _add_input_to_bin_sum([11, 22, 33], 0, 77)
-    [88, 22, 33]
+    (88, 22, 33)
     >>> _add_input_to_bin_sum([11, 22, 33], 1, 77)
-    [11, 99, 33]
+    (11, 99, 33)
     >>> _add_input_to_bin_sum([11, 22, 33], 2, 77)
-    [11, 22, 110]
+    (11, 22, 110)
     """
     new_bin_sums = list(bin_sums)
     new_bin_sums[bin_index] = new_bin_sums[bin_index] + input
-    return new_bin_sums
+    return tuple(new_bin_sums)
 def _transition_functions(num_of_bins:int):
     """
-    >>> for f in _transition_functions(3): f([11,22,33],77)
-    [11, 22, 33]
-    [88, 22, 33]
-    [11, 99, 33]
-    [11, 22, 110]
+    >>> for f in _transition_functions(3): f((11,22,33),77)
+    (11, 22, 33)
+    (88, 22, 33)
+    (11, 99, 33)
+    (11, 22, 110)
     """
     return [
         lambda state, input: state    # do not add the input at all

@@ -1,22 +1,18 @@
 #!python3
 
 """
-Uses the generic dynamic programming function to solve the
+Uses the sequential dynamic programming function to solve the
 max-min number partitioning problem.
 
-The states are of the form  (i, (v1, v2, ..., vk)) where k is the number of parts.
-The "i" is the number of items allocated so far.
-The "v1,...,vk" are the values of the bundles.
-
 Programmer: Erel Segal-Halevi
-Since: 2021-11
+Since: 2021-12
 """
 
-import dynprog, math
+import dynprog
 from typing import *
 
 
-def max_min_value(items:list, num_of_parts:int):
+def max_min_value(items:List[int], num_of_bins:int):
     """
     Returns the max-min value - does *not* return the partition itself.
 
@@ -27,71 +23,107 @@ def max_min_value(items:list, num_of_parts:int):
     >>> max_min_value([11,22,33,44,55,66,77,88,99], 3)
     165
     """
-    # Algorithm: add the numbers one by one to all possible bundles.
-    num_of_items = len(items)
-    def initial_states():  # returns (state,value) tuples
-        zero_values = num_of_parts*(0,)
-        yield ( (0, zero_values), -math.inf)
-    def neighbors (state:Tuple[int,tuple], value:int):   # returns (state,value) tuples
-        (item_index, values) = state
-        if item_index < num_of_items:
-            item = items[item_index]
-            next_index = item_index+1
-            for j in range(num_of_parts):
-                new_values = list(values)
-                new_values[j] += item
-                state_value = -math.inf if next_index < num_of_items else min(new_values)
-                yield ((next_index, tuple(sorted(new_values))), state_value)
-    def is_final_state(state):
-        return state[0]==num_of_items
-    return dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
+    return dynprog.sequential.max_value(
+        inputs = items,
+        initial_states = _initial_states(num_of_bins),
+        transition_functions = _transition_functions(num_of_bins),
+        value_function = _value_function,
+        filter_functions = None
+    )
 
-def max_min_partition(items:list, num_of_parts:int):
+def max_min_binition(items:list, num_of_bins:int):
     """
     Returns the max-min partition.
 
-    >>> max_min_partition([1,2,3,4], 2)
+    >>> max_min_binition([1,2,3,4], 2)
     (5, [[1, 4], [2, 3]])
-    >>> max_min_partition([1,2,3,4,5], 2)
-    (7, [[1, 2, 4], [3, 5]])
-    >>> max_min_partition([11,22,33,44,55,66,77,88,99], 3)
-    (165, [[11, 22, 33, 44, 55], [66, 99], [77, 88]])
+    >>> max_min_binition([1,2,3,4,5], 2)
+    (7, [[3, 5], [1, 2, 4]])
+    >>> max_min_binition([11,22,33,44,55,66,77,88,99], 3)
+    (165, [[66, 99], [77, 88], [11, 22, 33, 44, 55]])
     """
-    # Algorithm: add the numbers one by one to all possible bundles.
-    num_of_items = len(items)
-    def initial_states():  # returns (state,value,data) tuples
-        zero_values = num_of_parts*(0,)
-        empty_partition = num_of_parts*([],)
-        yield ( (0, zero_values), -math.inf, empty_partition)
-    def neighbors (state:Tuple[int,tuple], value:int, partition:list):   # returns (state,value,data) tuples
-        (item_index, part_values) = state
-        if item_index < num_of_items:
-            item = items[item_index]
-            next_index = item_index+1
-            for j in range(num_of_parts):
-                new_part_values = list(part_values)
-                new_part_values[j] += item
-                # if sorted(new_part_values)!=new_part_values:
-                #     continue    # keep only sorted states, to reduce redundancies.
-                state_value = -math.inf if next_index < num_of_items else min(new_part_values)
-                new_partition = list(partition)
-                new_partition[j] = new_partition[j] + [item]
-                yield ((next_index, tuple(new_part_values)), state_value, new_partition)
-    def is_final_state(state):
-        return state[0]==num_of_items
-    (state, value, data, num_of_states) = dynprog.general.max_value_solution(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
-    return (value,data)
+    (best_state,best_value,best_solution,num_of_states) = dynprog.sequential.max_value_solution(
+        inputs = items,
+        initial_states = _initial_states(num_of_bins),
+        transition_functions = _transition_functions(num_of_bins),
+        value_function = _value_function,
+		initial_solution=_initial_solution(num_of_bins),
+		construction_functions = _construction_functions(num_of_bins),
+        filter_functions = None
+    )
+    return (best_value,best_solution)
+
+
+
+
+
+def _initial_states(num_of_bins:int):
+    zero_values = num_of_bins*(0,)
+    return {zero_values}
+
+def _initial_solution(num_of_bins:int):
+    empty_bundles = [ [] for _ in range(num_of_bins)]
+    return empty_bundles
+
+
+
+def _add_input_to_bin_sum(bin_sums:list, bin_index:int, input:int):
+    """
+    Adds the given input integer to bin #bin_index in the given list of bins.
+    >>> _add_input_to_bin_sum([11, 22, 33], 0, 77)
+    (88, 22, 33)
+    >>> _add_input_to_bin_sum([11, 22, 33], 1, 77)
+    (11, 99, 33)
+    >>> _add_input_to_bin_sum([11, 22, 33], 2, 77)
+    (11, 22, 110)
+    """
+    new_bin_sums = list(bin_sums)
+    new_bin_sums[bin_index] = new_bin_sums[bin_index] + input
+    return tuple(new_bin_sums)
+def _transition_functions(num_of_bins:int):
+    """
+    >>> for f in _transition_functions(3): f([11,22,33],77)
+    (88, 22, 33)
+    (11, 99, 33)
+    (11, 22, 110)
+    """
+    return [
+        lambda state, input, bin_index=bin_index: _add_input_to_bin_sum(state, bin_index, input)
+        for bin_index in range(num_of_bins)
+    ]
+
+
+def _add_input_to_bin(bins:list, bin_index:int, input:int):
+    """
+    Adds the given input integer to bin #bin_index in the given list of bins.
+    >>> _add_input_to_bin([[11,22], [33,44], [55,66]], 1, 77)
+    [[11, 22], [33, 44, 77], [55, 66]]
+    """
+    new_bins = list(bins)
+    new_bins[bin_index] = new_bins[bin_index]+[input]
+    return new_bins
+def _construction_functions(num_of_bins:int):
+    return [
+        lambda solution,input,bin_index=bin_index: _add_input_to_bin(solution, bin_index, input)
+        for bin_index in range(num_of_bins)
+    ]
+
+
+_value_function = lambda state: min(state)
+
+
 
 
 if __name__=="__main__":
     import sys, logging
-    dynprog.general.logger.addHandler(logging.StreamHandler(sys.stdout))
-    dynprog.general.logger.setLevel(logging.WARNING)
+    dynprog.sequential.logger.addHandler(logging.StreamHandler(sys.stdout))
+    dynprog.sequential.logger.setLevel(logging.WARNING)
 
     import doctest
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.general.logger.setLevel(logging.WARNING)
+    dynprog.sequential.logger.setLevel(logging.INFO)
     print(max_min_value(5*[11]+5*[23], 2))
-    print(max_min_partition(5*[11]+5*[23], 2))
+    print(max_min_binition(5*[11]+5*[23], 2))
+    # Number of states should be around 100.
