@@ -160,5 +160,5 @@ if __name__=="__main__":
     valuation_matrix = np.random.randint(0,9, [3,10])
     print("valuation_matrix:\n",valuation_matrix)
     print(utilitarian_proportional_value(valuation_matrix))
-    # print(utilitarian_proportional_allocation(valuation_matrix))
+    print(utilitarian_proportional_allocation(valuation_matrix))
     # should have about 20k states.
