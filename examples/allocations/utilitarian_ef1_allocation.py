@@ -24,7 +24,7 @@ def utilitarian_ef1_value(valuation_matrix, efx=False):
     """
     Returns the maximum utilitarian value in a ef1 allocation - does *not* return the partition itself.
 
-    >>> dynprog.logger.setLevel(logging.WARNING)
+    >>> dynprog.general.logger.setLevel(logging.WARNING)
     >>> utilitarian_ef1_value([[11,0,11],[33,44,55]])
     110.0
     >>> utilitarian_ef1_value([[11,0,11],[33,44,55]],efx=True)

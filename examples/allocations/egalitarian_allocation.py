@@ -12,7 +12,10 @@ Programmer: Erel Segal-Halevi
 Since: 2021-12
 """
 
-import dynprog, math
+
+import dynprog
+from dynprog.sequential import SequentialDynamicProgram
+
 from typing import *
 
 
@@ -31,13 +34,9 @@ def egalitarian_value(valuation_matrix):
     187
     """
     num_of_agents   = len(valuation_matrix)
-    return dynprog.sequential.max_value(
-        inputs = _items_as_value_vectors(valuation_matrix),
-        initial_states = _initial_states(num_of_agents),
-        transition_functions = _transition_functions(num_of_agents),
-        value_function = _value_function,
-        filter_functions = None
-    )
+    items = _items_as_value_vectors(valuation_matrix)
+    return EgalitarianDP(num_of_agents).max_value(items)
+
 
 
 def egalitarian_allocation(valuation_matrix):
@@ -54,38 +53,9 @@ def egalitarian_allocation(valuation_matrix):
     (187, [[1, 6], [0, 2, 5, 7], [3, 4, 8]])
     """
     num_of_agents   = len(valuation_matrix)
-    (best_state,best_value,best_solution,num_of_states) = dynprog.sequential.max_value_solution(
-        inputs = _items_as_value_vectors(valuation_matrix),
-        initial_states = _initial_states(num_of_agents),
-        transition_functions = _transition_functions(num_of_agents),
-        value_function = _value_function,
-		initial_solution=_initial_solution(num_of_agents),
-		construction_functions = _construction_functions(num_of_agents),
-        filter_functions = None
-    )
+    items = _items_as_value_vectors(valuation_matrix)
+    (best_state,best_value,best_solution,num_of_states) = EgalitarianDP(num_of_agents).max_value_solution(items)
     return (best_value,best_solution)
-
-
-
-    def initial_states():  # returns (state,value,data) tuples
-        zero_values = num_of_agents*(0,)
-        empty_allocation = num_of_agents*([],)
-        yield ( (0, zero_values), -math.inf, empty_allocation)
-    def neighbors (state:Tuple[int,tuple], value:int, allocation:list):   # returns (state,value,data) tuples
-        (item_index, bundle_values) = state
-        if item_index < num_of_items:
-            next_index = item_index+1
-            for agent_index in range(num_of_agents):
-                new_bundle_values = list(bundle_values)
-                new_bundle_values[agent_index] += valuation_matrix[agent_index][item_index]
-                state_value = -math.inf if next_index < num_of_items else min(new_bundle_values)
-                new_allocation = list(allocation)
-                new_allocation[agent_index] = new_allocation[agent_index] + [item_index]
-                yield ((next_index, tuple(new_bundle_values)), state_value, new_allocation)
-    def is_final_state(state):
-        return state[0]==num_of_items
-    (state, value, data, num_of_states) = dynprog.general.max_value_solution(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
-    return (value,data)
 
 
 def _items_as_value_vectors(valuation_matrix):
@@ -98,13 +68,37 @@ def _items_as_value_vectors(valuation_matrix):
 
 
 
-def _initial_states(num_of_agents:int):
-    zero_values = num_of_agents*(0,)
-    return {zero_values}
 
-def _initial_solution(num_of_agents:int):
-    empty_bundles = [ [] for _ in range(num_of_agents)]
-    return empty_bundles
+#### Dynamic program definition:
+
+class EgalitarianDP(SequentialDynamicProgram):
+    def __init__(self, num_of_agents:int):
+        self.num_of_agents = num_of_agents
+
+    def initial_states(self):
+        zero_values = self.num_of_agents*(0,)
+        return {zero_values}
+
+    def initial_solution(self):
+        empty_bundles = [ [] for _ in range(self.num_of_agents)]
+        return empty_bundles
+   
+    def transition_functions(self):
+        return [
+            lambda state, input, agent_index=agent_index: _add_input_to_agent_value(state, agent_index, input)
+            for agent_index in range(self.num_of_agents)
+        ]
+
+    def construction_functions(self):
+        return [
+            lambda solution,input,agent_index=agent_index: _add_input_to_bin(solution, agent_index, input)
+            for agent_index in range(self.num_of_agents)
+        ]
+
+    def value_function(self):
+        return lambda state: min(state)
+
+
 
 
 
@@ -121,17 +115,6 @@ def _add_input_to_agent_value(agent_values:list, agent_index:int, input:int):
     new_agent_values = list(agent_values)
     new_agent_values[agent_index] = new_agent_values[agent_index] + input[agent_index]
     return tuple(new_agent_values)
-def _transition_functions(num_of_agents:int):
-    """
-    >>> for f in _transition_functions(3): f([11,22,33],[55,66,77,1])
-    (66, 22, 33)
-    (11, 88, 33)
-    (11, 22, 110)
-    """
-    return [
-        lambda state, input, agent_index=agent_index: _add_input_to_agent_value(state, agent_index, input)
-        for agent_index in range(num_of_agents)
-    ]
 
 
 def _add_input_to_bin(bins:list, agent_index:int, input:int):
@@ -144,14 +127,6 @@ def _add_input_to_bin(bins:list, agent_index:int, input:int):
     item_index = input[-1]
     new_bins[agent_index] = new_bins[agent_index]+[item_index]
     return new_bins
-def _construction_functions(num_of_agents:int):
-    return [
-        lambda solution,input,agent_index=agent_index: _add_input_to_bin(solution, agent_index, input)
-        for agent_index in range(num_of_agents)
-    ]
-
-
-_value_function = lambda state: min(state)
 
 
 

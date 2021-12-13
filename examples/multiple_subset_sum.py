@@ -8,6 +8,8 @@ Since: 2021-12
 """
 
 import dynprog
+from dynprog.sequential import SequentialDynamicProgram
+
 from typing import *
 
 
@@ -29,13 +31,7 @@ def max_sum(inputs: List[int], capacities:List[int])->int:
     >>> max_sum([100,200,400,700,1100,1600,2200,2900,3700], [2005,2006])
     4000
     """
-    return dynprog.sequential.max_value(
-        inputs,
-        initial_states = _initial_states(len(capacities)),
-        transition_functions = _transition_functions(len(capacities)),
-        value_function = _value_function,
-        filter_functions = _filter_functions(capacities)
-    )
+    return MultipleSubsetSumDP(capacities).max_value(inputs)
 
 
 def max_sum_solution(inputs: List[int], capacities:List[int])->int:
@@ -53,31 +49,57 @@ def max_sum_solution(inputs: List[int], capacities:List[int])->int:
     >>> max_sum_solution([100,200,400,700,1100,1600,2200,2900,3700], [2005,2006])
     [[400, 1600], [200, 700, 1100]]
     """
-    (best_state,best_value,best_solution,num_of_states) = dynprog.sequential.max_value_solution(
-        inputs,
-        initial_states = _initial_states(len(capacities)),
-        transition_functions = _transition_functions(len(capacities)),
-        value_function = _value_function,
-		initial_solution = _initial_solution(len(capacities)),
-		construction_functions = _construction_functions(len(capacities)),
-        filter_functions = _filter_functions(capacities)
-    )
+    (best_state,best_value,best_solution,num_of_states) =  MultipleSubsetSumDP(capacities).max_value_solution(inputs)
     return best_solution
 
 
 
-# Common definitions:
+#### Dynamic program definition:
 
-def _initial_states(num_of_bins:int):
-    zero_values = num_of_bins*(0,)
-    return {zero_values}
+class MultipleSubsetSumDP(SequentialDynamicProgram):
+    def __init__(self, capacities:List[int]):
+        self.capacities = capacities
+        self.num_of_bins = len(capacities)
 
-def _initial_solution(num_of_bins:int):
-    empty_bundles = [ [] for _ in range(num_of_bins)]
-    return empty_bundles
+    def initial_states(self):
+        zero_values = self.num_of_bins*(0,)
+        return {zero_values}
 
+    def initial_solution(self):
+        empty_bundles = [ [] for _ in range(self.num_of_bins)]
+        return empty_bundles
 
    
+    def transition_functions(self):
+        return [
+            lambda state, input: state    # do not add the input at all
+        ] + [
+            lambda state, input, bin_index=bin_index: _add_input_to_bin_sum(state, bin_index, input)
+            for bin_index in range(self.num_of_bins)
+        ]
+
+    def construction_functions(self):
+        return  [
+            lambda solution, input: solution    # do not add the input at all
+        ] + [
+            lambda solution,input,bin_index=bin_index: _add_input_to_bin(solution, bin_index, input)
+            for bin_index in range(self.num_of_bins)
+        ]
+
+    def value_function(self):
+        return lambda state: sum(state)
+
+    def filter_functions(self):
+        return  [
+            lambda state,input: True    # do not add the input at all
+        ] +  [
+            lambda state,input,bin_index=bin_index: state[bin_index]+input <= self.capacities[bin_index]
+            for bin_index in range(self.num_of_bins)
+        ]
+
+
+
+
 def _add_input_to_bin_sum(bin_sums:list, bin_index:int, input:int):
     """
     Adds the given input integer to bin #bin_index in the given list of bins.
@@ -91,20 +113,6 @@ def _add_input_to_bin_sum(bin_sums:list, bin_index:int, input:int):
     new_bin_sums = list(bin_sums)
     new_bin_sums[bin_index] = new_bin_sums[bin_index] + input
     return tuple(new_bin_sums)
-def _transition_functions(num_of_bins:int):
-    """
-    >>> for f in _transition_functions(3): f((11,22,33),77)
-    (11, 22, 33)
-    (88, 22, 33)
-    (11, 99, 33)
-    (11, 22, 110)
-    """
-    return [
-        lambda state, input: state    # do not add the input at all
-    ] + [
-        lambda state, input, bin_index=bin_index: _add_input_to_bin_sum(state, bin_index, input)
-        for bin_index in range(num_of_bins)
-    ]
 
 
 def _add_input_to_bin(bins:list, bin_index:int, input:int):
@@ -116,26 +124,9 @@ def _add_input_to_bin(bins:list, bin_index:int, input:int):
     new_bins = list(bins)
     new_bins[bin_index] = new_bins[bin_index]+[input]
     return new_bins
-def _construction_functions(num_of_bins:int):
-    return  [
-        lambda solution, input: solution    # do not add the input at all
-    ] + [
-        lambda solution,input,bin_index=bin_index: _add_input_to_bin(solution, bin_index, input)
-        for bin_index in range(num_of_bins)
-    ]
 
 
-_value_function = lambda state: sum(state)
 
-
-def _filter_functions(capacities:List[int]):
-    num_of_bins = len(capacities)
-    return  [
-        lambda state,input: True    # do not add the input at all
-    ] +  [
-        lambda state,input,bin_index=bin_index: state[bin_index]+input <= capacities[bin_index]
-        for bin_index in range(num_of_bins)
-    ]
 
 
 

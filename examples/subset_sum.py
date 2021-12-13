@@ -7,6 +7,8 @@ Since: 2021-12
 """
 
 import dynprog
+from dynprog.sequential import SequentialDynamicProgram
+
 from typing import *
 
 
@@ -26,13 +28,7 @@ def max_value(inputs: List[int], capacity:int)->int:
     >>> max_value([100,200,400,700,1100,1600,2200,2900,3700], 4005)
     4000
     """
-    return dynprog.sequential.max_value(
-        inputs = inputs,
-        initial_states = _initial_states,
-        transition_functions = _transition_functions,
-        value_function = _value_function,
-        filter_functions = _filter_functions(capacity)
-    )
+    return SubsetSumDP(capacity).max_value(inputs)
 
 
 def max_value_solution(inputs: List[int], capacity:int)->int:
@@ -50,39 +46,42 @@ def max_value_solution(inputs: List[int], capacity:int)->int:
     >>> max_value_solution([100,200,400,700,1100,1600,2200,2900,3700], 4005)
     [100, 200, 3700]
     """
-    return dynprog.sequential.max_value_solution(
-        inputs = inputs,
-        initial_states = _initial_states,
-        transition_functions = _transition_functions,
-        value_function = _value_function,
-		initial_solution=_initial_solution,
-		construction_functions = _construction_functions,
-        filter_functions = _filter_functions(capacity)
-    )[2]
+    return SubsetSumDP(capacity).max_value_solution(inputs)[2]
 
 
 
-# Common definitions:
 
-_initial_states = [0]
 
-_initial_solution = []
+#### Dynamic program definition:
 
-_transition_functions = [
-	lambda state,input: state+input,    # adding the input
-	lambda state,input: state+0,        # not adding the input
-]
+class SubsetSumDP(SequentialDynamicProgram):
+    def __init__(self, capacity:int):
+        self.capacity = capacity
 
-_construction_functions = [
-	lambda solution,input: solution+[input],    # adding the input
-	lambda solution,_:     solution,            # not adding the input
-]
+    def initial_states(self):
+        return [0]
 
-_value_function = lambda state: state
+    def initial_solution(self):
+        return []
 
-def _filter_functions(capacity:int):
-	return [
-            lambda state,input: state+input<=capacity,    # adding the input
+    def transition_functions(self):
+        return  [
+            lambda state,input: state+input,    # adding the input
+            lambda state,input: state+0,        # not adding the input
+        ]
+
+    def construction_functions(self):
+        return  [
+            lambda solution,input: solution+[input],    # adding the input
+            lambda solution,_:     solution,            # not adding the input
+        ]
+
+    def value_function(self):
+        return lambda state: state
+
+    def filter_functions(self):
+        return [
+            lambda state,input: state+input<=self.capacity,    # adding the input
             lambda _,__:        True,                     # not adding the input
         ]
 
