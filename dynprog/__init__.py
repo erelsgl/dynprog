@@ -5,5 +5,6 @@ Programmer: Erel Segal-Halevi.
 Since: 2021-11.
 """
 
-from dynprog.functionbased import *
-# from dynprog.classbased import *   
+from dynprog.functionbased import max_value, max_value_solution
+import dynprog.sequential as sequential
+# from dynprog.classbased import max_value, max_value_solution

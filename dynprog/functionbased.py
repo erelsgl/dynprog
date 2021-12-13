@@ -25,7 +25,7 @@ def max_value(
     is_final_state: Callable[[State],bool] = None,
     ):
     """
-    This is a simple function that only returns the maximum value - it does not return the optimum solution.
+    This is a shorter function that only returns the maximum value - it does not return the optimum solution.
 
     The initial states are determined by the argument:
     * inital_states: a generator function, that generates tuples of the form (state,value) for all initial states.
@@ -118,11 +118,9 @@ def max_value_solution(
         best_final_state = max([state for state in map_state_to_value.keys() if is_final_state(state)], key=lambda state:map_state_to_value[state])
     else:
         raise ValueError("Either final_states or is_final_state must be given")
-    return (
-        best_final_state, 
-        map_state_to_value[best_final_state], 
-        map_state_to_data[best_final_state],
-        num_of_processed_states)
+    best_final_state_value = map_state_to_value[best_final_state]
+    best_final_state_data = map_state_to_data[best_final_state]
+    return (best_final_state, best_final_state_value, best_final_state_data, num_of_processed_states)
 
 
 
