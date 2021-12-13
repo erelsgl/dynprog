@@ -82,6 +82,9 @@ def _items_as_value_vectors(valuation_matrix):
 
 class PartitionDP(SequentialDynamicProgram):
 
+    # The states are of the form  (v1, v2, ..., vn) where n is the number of agents.
+    # The "vi" are the value of bundle i to agent i.
+
     def __init__(self, valuation_matrix):
         num_of_agents = self.num_of_agents = len(valuation_matrix)
         self.thresholds = [sum(valuation_matrix[i])/num_of_agents for i in range(num_of_agents)]

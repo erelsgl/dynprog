@@ -2,6 +2,8 @@
 """
 Uses the sequential dynamic programming function to solve the subset-sum problem.
 
+The state contains a single number: the current sum.
+
 Programmer: Erel Segal-Halevi
 Since: 2021-12
 """
@@ -55,6 +57,9 @@ def max_value_solution(inputs: List[int], capacity:int)->int:
 #### Dynamic program definition:
 
 class SubsetSumDP(SequentialDynamicProgram):
+
+    # The state contains a single number: the current sum.
+
     def __init__(self, capacity:int):
         self.capacity = capacity
 

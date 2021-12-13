@@ -8,6 +8,9 @@ This is a generalization of max_min_partition.py.
 
 The input is a valuation-matrix v, where v[i][j] is the value of agent i to item j.
 
+The states are of the form  (v1, v2, ..., vn) where n is the number of agents.
+The "vi" are the value of bundle i to agent i.
+
 Programmer: Erel Segal-Halevi
 Since: 2021-12
 """
@@ -72,6 +75,10 @@ def _items_as_value_vectors(valuation_matrix):
 #### Dynamic program definition:
 
 class EgalitarianDP(SequentialDynamicProgram):
+
+    # The states are of the form  (v1, v2, ..., vn) where n is the number of agents.
+    # The "vi" are the value of bundle i to agent i.
+
     def __init__(self, num_of_agents:int):
         self.num_of_agents = num_of_agents
 

@@ -4,6 +4,9 @@
 Uses the sequential dynamic programming function to solve the
 max-min number partitioning problem.
 
+The states are of the form  (v1, v2, ..., vn) where n is the number of bins.
+The "vi" is the current sum in bin i.
+
 Programmer: Erel Segal-Halevi
 Since: 2021-12
 """
@@ -48,6 +51,10 @@ def max_min_partition(items:list, num_of_bins:int):
 #### Dynamic program definition:
 
 class PartitionDP(SequentialDynamicProgram):
+
+    # The states are of the form  (v1, v2, ..., vn) where n is the number of bins.
+    # The "vi" is the current sum in bin i.
+
     def __init__(self, num_of_bins:int):
         self.num_of_bins = num_of_bins
 
