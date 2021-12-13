@@ -90,7 +90,7 @@ def utilitarian_ef1_value(valuation_matrix, efx=False):
     def is_final_state(state):
         (item_index, _, _) = state
         return item_index==num_of_items
-    value = dynprog.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
+    value = dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
     if value==-math.inf:
         raise ValueError("No EF1 allocation -- this must be a bug")
     return (value + sum(map(sum,valuation_matrix))) / num_of_agents
@@ -99,8 +99,8 @@ def utilitarian_ef1_value(valuation_matrix, efx=False):
 
 if __name__=="__main__":
     import sys
-    dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.addHandler(logging.StreamHandler(sys.stdout))
+    dynprog.general.logger.setLevel(logging.WARNING)
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.WARNING)
 
@@ -108,7 +108,7 @@ if __name__=="__main__":
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.setLevel(logging.WARNING)
     import numpy as np
     valuation_matrix = np.random.randint(0,99, [3,6])   # ~ 1093 states
     # valuation_matrix = np.random.randint(0,99, [3,7])   # ~ 3280 states

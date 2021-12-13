@@ -51,7 +51,7 @@ def egalitarian_value(valuation_matrix):
                 yield ((next_index, tuple(new_bundle_values)), state_value)
     def is_final_state(state):
         return state[0]==num_of_items
-    return dynprog.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
+    return dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
 
 def egalitarian_allocation(valuation_matrix):
     """
@@ -86,20 +86,20 @@ def egalitarian_allocation(valuation_matrix):
                 yield ((next_index, tuple(new_bundle_values)), state_value, new_allocation)
     def is_final_state(state):
         return state[0]==num_of_items
-    (state, value, data, num_of_states) = dynprog.max_value_solution(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
+    (state, value, data, num_of_states) = dynprog.general.max_value_solution(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
     return (value,data)
 
 
 if __name__=="__main__":
     import sys, logging
-    dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.addHandler(logging.StreamHandler(sys.stdout))
+    dynprog.general.logger.setLevel(logging.WARNING)
 
     import doctest
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.setLevel(logging.WARNING)
     import numpy as np
     valuation_matrix = np.random.randint(0,99, [3,9])
     print("valuation_matrix:\n",valuation_matrix)

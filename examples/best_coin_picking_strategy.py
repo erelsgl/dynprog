@@ -49,13 +49,13 @@ def max_value(coins: List[Number], first:bool):
                 yield ((i,j+1,True), -value + coins[j])
     def final_states():
         yield (0,num_coins,first)
-    value = dynprog.max_value(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
+    value = dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
     return value if first else -value
 
 
 if __name__=="__main__":
     import sys, logging
-    dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
+    dynprog.general.logger.addHandler(logging.StreamHandler(sys.stdout))
     # dynprog.logger.setLevel(logging.INFO)
 
     import doctest

@@ -26,7 +26,7 @@ def utilitarian_envyfree_value(valuation_matrix):
     Returns -inf if there is no envy-free allocation.
 
     >>> logger.setLevel(logging.WARNING)
-    >>> dynprog.logger.setLevel(logging.WARNING)
+    >>> dynprog.general.logger.setLevel(logging.WARNING)
     >>> utilitarian_envyfree_value([[11,0,11],[33,44,55]])
     110.0
     >>> utilitarian_envyfree_value([[11,22,33,44],[44,33,22,11]])
@@ -65,15 +65,15 @@ def utilitarian_envyfree_value(valuation_matrix):
     def is_final_state(state):
         (item_index, _) = state
         return item_index==num_of_items
-    value = dynprog.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
+    value = dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
     return (value + sum(map(sum,valuation_matrix))) / num_of_agents
 
 
 
 if __name__=="__main__":
     import sys
-    dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.addHandler(logging.StreamHandler(sys.stdout))
+    dynprog.general.logger.setLevel(logging.WARNING)
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.WARNING)
 
@@ -81,7 +81,7 @@ if __name__=="__main__":
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.setLevel(logging.WARNING)
     import numpy as np
     valuation_matrix = np.random.randint(0,99, [3,9])
     print("valuation_matrix:\n",valuation_matrix)

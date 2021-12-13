@@ -44,7 +44,7 @@ def max_min_value(items:list, num_of_parts:int):
                 yield ((next_index, tuple(sorted(new_values))), state_value)
     def is_final_state(state):
         return state[0]==num_of_items
-    return dynprog.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
+    return dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
 
 def max_min_partition(items:list, num_of_parts:int):
     """
@@ -79,19 +79,19 @@ def max_min_partition(items:list, num_of_parts:int):
                 yield ((next_index, tuple(new_part_values)), state_value, new_partition)
     def is_final_state(state):
         return state[0]==num_of_items
-    (state, value, data, num_of_states) = dynprog.max_value_solution(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
+    (state, value, data, num_of_states) = dynprog.general.max_value_solution(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
     return (value,data)
 
 
 if __name__=="__main__":
     import sys, logging
-    dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.addHandler(logging.StreamHandler(sys.stdout))
+    dynprog.general.logger.setLevel(logging.WARNING)
 
     import doctest
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.setLevel(logging.WARNING)
     print(max_min_value(5*[11]+5*[23], 2))
     print(max_min_partition(5*[11]+5*[23], 2))

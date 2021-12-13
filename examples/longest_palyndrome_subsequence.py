@@ -43,7 +43,7 @@ def LPS_length(string:str):
             if j<lenstr: yield ((i,j+1),value)
     def final_states():
         yield (0,lenstr)
-    return dynprog.max_value(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
+    return dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
 
 def LPS_string(string:str,count_states=False):
     """
@@ -71,19 +71,19 @@ def LPS_string(string:str,count_states=False):
             if j<lenstr:  yield ((i,j+1),value,data)
     def final_states():
         yield (0,lenstr)
-    (state, value, data, num_of_states) = dynprog.max_value_solution(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
+    (state, value, data, num_of_states) = dynprog.general.max_value_solution(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
     return (state,value,data,num_of_states) if count_states else data
 
 
 if __name__=="__main__":
     import sys, logging
-    dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
+    dynprog.general.logger.addHandler(logging.StreamHandler(sys.stdout))
 
     import doctest
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.logger.setLevel(logging.INFO)
+    dynprog.general.logger.setLevel(logging.INFO)
     print(LPS_length("programming"))
     print(LPS_string("programming"))
     print(LPS_string("programming", count_states=True))

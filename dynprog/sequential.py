@@ -21,6 +21,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
 def max_value(
     inputs: List[Input],
     initial_states:        List[State],                                 # S_0
@@ -38,9 +39,10 @@ def max_value(
     :param filter_functions [optional]: a set of functions; each function maps a pair (state,input) to a boolean value which is "true" iff the new state should be added.
     """
     current_states = initial_states
-    if filter_functions == None:
-        filter_functions = [(lambda x:0) for _ in transition_functions]
-    num_of_processed_states = 0
+    if filter_functions is None:
+        filter_functions = _default_filter_functions(transition_functions)
+    logger.info("%d initial states, %d transition functions.", len(current_states), len(transition_functions))
+    num_of_processed_states = len(current_states)
     for input_index,input in enumerate(inputs):
         next_states = [
             f(state,input)
@@ -48,10 +50,13 @@ def max_value(
             for state in current_states
             if h(state,input)
         ]
-        logger.info("Processed input %d (%s) and added %d states.", input_index, input, len(next_states))
+        logger.info("Processed input %d (%s) and added %d states: %s.", input_index, input, len(next_states), next_states)
+        # logger.info("Processed input %d (%s) and added %d states.", input_index, input, len(next_states))
         num_of_processed_states += len(next_states)
         current_states = next_states
     logger.info("Processed %d states.", num_of_processed_states)
+    if len(current_states)==0:
+        raise ValueError("No final states!")
     return max([value_function(state) for state in current_states])
 
 
@@ -85,9 +90,10 @@ def max_value_solution(
         transition_index: int  # the index of the transition function used to go from prev to state.
 
     current_state_records = [StateRecord(state,None,None) for state in initial_states] # Add a link to the 'previous state', which is initially None.
-    if filter_functions == None:
-        filter_functions = [(lambda x:0) for _ in transition_functions]
-    num_of_processed_states = 0
+    if filter_functions is None:
+        filter_functions = _default_filter_functions(transition_functions)
+    logger.info("%d initial states, %d transition functions.", len(current_state_records), len(transition_functions))
+    num_of_processed_states = len(current_state_records)
     for input_index,input in enumerate(inputs):
         next_state_records = [
             StateRecord(f(record.state,input), record, transition_index)
@@ -99,6 +105,10 @@ def max_value_solution(
         num_of_processed_states += len(next_state_records)
         current_state_records = next_state_records
     logger.info("Processed %d states.", num_of_processed_states)
+
+    if len(current_state_records)==0:
+        raise ValueError("No final states!")
+
     best_final_record = max(current_state_records, key=lambda record: value_function(record.state))
     best_final_state = best_final_record.state
     best_final_state_value = value_function(best_final_state)
@@ -119,6 +129,11 @@ def max_value_solution(
         solution = construction_functions[transition_index](solution, input)
     
     return (best_final_state, best_final_state_value, solution, num_of_processed_states)
+
+
+
+def _default_filter_functions(transition_functions):
+    return [(lambda state,input: True) for _ in transition_functions]
 
 
 

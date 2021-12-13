@@ -24,7 +24,7 @@ def utilitarian_prop1_value(valuation_matrix, propx=False):
     """
     Returns the maximum utilitarian value in a PROP1 allocation - does *not* return the partition itself.
 
-    >>> dynprog.logger.setLevel(logging.WARNING)
+    >>> dynprog.general.logger.setLevel(logging.WARNING)
     >>> utilitarian_prop1_value([[11,0,11],[33,44,55]])
     132
     >>> utilitarian_prop1_value([[11,0,11],[33,44,55]],propx=True)
@@ -83,7 +83,7 @@ def utilitarian_prop1_value(valuation_matrix, propx=False):
     def is_final_state(state):
         (item_index, _, _) = state
         return item_index==num_of_items
-    value = dynprog.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
+    value = dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
     if value==-math.inf:
         raise ValueError("No PROP1 allocation -- this must be a bug")
     return value
@@ -93,7 +93,7 @@ def utilitarian_prop1_allocation(valuation_matrix, propx=False):
     """
     Returns the utilitarian-maximum PROP1 allocation and its utilitarian value.
 
-    >>> dynprog.logger.setLevel(logging.WARNING)
+    >>> dynprog.general.logger.setLevel(logging.WARNING)
     >>> utilitarian_prop1_allocation([[11,0,11],[33,44,55]])
     (132, [[], [0, 1, 2]])
     >>> utilitarian_prop1_allocation([[11,0,11],[33,44,55]], propx=True)
@@ -163,7 +163,7 @@ def utilitarian_prop1_allocation(valuation_matrix, propx=False):
     def is_final_state(state):
         (item_index, _, _) = state
         return item_index==num_of_items
-    (state, value, data, num_of_states) = dynprog.max_value_solution(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
+    (state, value, data, num_of_states) = dynprog.general.max_value_solution(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
     if value==-math.inf:
         raise ValueError("No PROP1 allocation -- this must be a bug")
     else:
@@ -172,8 +172,8 @@ def utilitarian_prop1_allocation(valuation_matrix, propx=False):
 
 if __name__=="__main__":
     import sys
-    dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.addHandler(logging.StreamHandler(sys.stdout))
+    dynprog.general.logger.setLevel(logging.WARNING)
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.WARNING)
 
@@ -181,7 +181,7 @@ if __name__=="__main__":
     (failures,tests) = doctest.testmod(report=True)
     print ("{} failures, {} tests".format(failures,tests))
 
-    dynprog.logger.setLevel(logging.WARNING)
+    dynprog.general.logger.setLevel(logging.WARNING)
     import numpy as np
     # valuation_matrix = np.random.randint(0,99, [3,6])   # ~ 1000 states
     valuation_matrix = np.random.randint(0,99, [3,7])   # ~ 3000 states
