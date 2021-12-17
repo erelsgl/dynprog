@@ -87,6 +87,7 @@ class SequentialDynamicProgram(ABC):
         This function returns both the maximum value and the corresponding optimum solution.
         :param inputs: the list of inputs.
         """
+        inputs = list(inputs)  # allow to iterate twice. See https://stackoverflow.com/q/70381559/827927
 
         @dataclass
         class StateRecord:
@@ -98,7 +99,7 @@ class SequentialDynamicProgram(ABC):
             def __eq__(self,other):
                 return (self.state==other.state)
 
-        
+
         current_state_records = {StateRecord(state,None,None) for state in self.initial_states()} # Add a link to the 'previous state', which is initially None.
         transition_functions = self.transition_functions()
         filter_functions = self.filter_functions()

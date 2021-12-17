@@ -43,15 +43,15 @@ def max_value_solution(weights: List[int], values: List[int], capacity:int)->int
     >>> max_value_solution([3,5], [10,10], 2)
     []
     >>> max_value_solution([3,5], [10,20], 4)
-    [3]
+    [(3, 10)]
     >>> max_value_solution([3,5], [20,10], 4)
-    [3]
+    [(3, 20)]
     >>> max_value_solution([3,5], [10,20], 6)
-    [5]
+    [(5, 20)]
     >>> max_value_solution([3,5], [20,10], 6)
-    [5]
+    [(3, 20)]
     >>> max_value_solution([3,5], [10,20], 8)
-    [3, 5]
+    [(3, 10), (5, 20)]
     """
     return KnapsackDP(capacity).max_value_solution(inputs=zip(weights,values))[2]
 
@@ -101,7 +101,7 @@ class KnapsackDP(SequentialDynamicProgram):
 if __name__=="__main__":
     import sys, logging
     dynprog.sequential.logger.addHandler(logging.StreamHandler(sys.stdout))
-    dynprog.sequential.logger.setLevel(logging.INFO)
+    dynprog.sequential.logger.setLevel(logging.WARNING)
 
     import doctest
     (failures,tests) = doctest.testmod(report=True)
