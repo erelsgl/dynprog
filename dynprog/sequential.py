@@ -98,6 +98,7 @@ class SequentialDynamicProgram(ABC):
             def __eq__(self,other):
                 return (self.state==other.state)
 
+        
         current_state_records = {StateRecord(state,None,None) for state in self.initial_states()} # Add a link to the 'previous state', which is initially None.
         transition_functions = self.transition_functions()
         filter_functions = self.filter_functions()
