@@ -19,6 +19,8 @@ from dynprog.sequential import SequentialDynamicProgram
 import math, logging
 from typing import *
 
+from common import add_input_to_agent_value, add_input_to_bin, items_as_value_vectors
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,7 +40,7 @@ def utilitarian_proportional_value(valuation_matrix):
     >>> utilitarian_proportional_value([[11],[22]])  # no proportional allocation
     -inf
     """
-    items = _items_as_value_vectors(valuation_matrix)
+    items = items_as_value_vectors(valuation_matrix)
     return PartitionDP(valuation_matrix).max_value(items)
 
 def utilitarian_proportional_allocation(valuation_matrix):
@@ -60,20 +62,11 @@ def utilitarian_proportional_allocation(valuation_matrix):
     >>> utilitarian_proportional_allocation([[37,20,34,12,71,17,55,97,79],[57,5,59,63,92,23,4,36,69],[16,3,41,42,68,47,60,39,17]])
     (556, [[1, 7, 8], [0, 3, 4], [2, 5, 6]])
     """
-    items = _items_as_value_vectors(valuation_matrix)
+    items = items_as_value_vectors(valuation_matrix)
     (best_state,best_value,best_solution,num_of_states) = PartitionDP(valuation_matrix).max_value_solution(items)
     if best_value==-math.inf:
         raise ValueError("No proportional allocation")
     return (best_value,best_solution)
-
-
-def _items_as_value_vectors(valuation_matrix):
-    num_of_agents   = len(valuation_matrix)
-    num_of_items    = len(valuation_matrix[0])
-    return [  # Each item is represented by a vector of values - a value for each agent. The last value is the item index.
-        [valuation_matrix[agent_index][item_index] for agent_index in range(num_of_agents)] + [item_index]
-        for item_index in range(num_of_items)
-    ]
 
 
 #### Dynamic program definition:
@@ -97,13 +90,13 @@ class PartitionDP(SequentialDynamicProgram):
    
     def transition_functions(self):
         return [
-            lambda state, input, agent_index=agent_index: _add_input_to_agent_value(state, agent_index, input)
+            lambda state, input, agent_index=agent_index: add_input_to_agent_value(state, agent_index, input)
             for agent_index in range(self.num_of_agents)
         ]
 
     def construction_functions(self):
         return [
-            lambda solution,input,agent_index=agent_index: _add_input_to_bin(solution, agent_index, input)
+            lambda solution,input,agent_index=agent_index: add_input_to_bin(solution, agent_index, input[-1])
             for agent_index in range(self.num_of_agents)
         ]
 
@@ -113,37 +106,6 @@ class PartitionDP(SequentialDynamicProgram):
     def _is_proportional(self, bundle_values:list)->bool:
         return all([bundle_values[i] >= self.thresholds[i] for i in range(self.num_of_agents)])
 
-
-
-
-
-def _add_input_to_agent_value(agent_values:list, agent_index:int, input:list):
-    """
-    :param input: a list of values: input[i] represents the value of the current item for agent i.
-
-    Adds the given item to agent #agent_index.
-    >>> _add_input_to_agent_value([11, 22, 33], 0, [55,66,77,1])
-    (66, 22, 33)
-    >>> _add_input_to_agent_value([11, 22, 33], 1, [55,66,77,1])
-    (11, 88, 33)
-    >>> _add_input_to_agent_value([11, 22, 33], 2, [55,66,77,1])
-    (11, 22, 110)
-    """
-    new_agent_values = list(agent_values)
-    new_agent_values[agent_index] = new_agent_values[agent_index] + input[agent_index]
-    return tuple(new_agent_values)
-
-
-def _add_input_to_bin(bins:list, agent_index:int, input:int):
-    """
-    Adds the given input integer to bin #agent_index in the given list of bins.
-    >>> _add_input_to_bin([[11,22], [33,44], [55,66]], 1, [55, 66, 77,1])
-    [[11, 22], [33, 44, 1], [55, 66]]
-    """
-    new_bins = list(bins)
-    item_index = input[-1]
-    new_bins[agent_index] = new_bins[agent_index]+[item_index]
-    return new_bins
 
 
 

@@ -21,6 +21,8 @@ from dynprog.sequential import SequentialDynamicProgram
 
 from typing import *
 
+from common import add_input_to_bin, add_input_to_agent_value
+
 
 def egalitarian_value(valuation_matrix):
     """
@@ -92,48 +94,18 @@ class EgalitarianDP(SequentialDynamicProgram):
    
     def transition_functions(self):
         return [
-            lambda state, input, agent_index=agent_index: _add_input_to_agent_value(state, agent_index, input)
+            lambda state, input, agent_index=agent_index: add_input_to_agent_value(state, agent_index, input)
             for agent_index in range(self.num_of_agents)
         ]
 
     def construction_functions(self):
         return [
-            lambda solution,input,agent_index=agent_index: _add_input_to_bin(solution, agent_index, input)
+            lambda solution,input,agent_index=agent_index: add_input_to_bin(solution, agent_index, input[-1])
             for agent_index in range(self.num_of_agents)
         ]
 
     def value_function(self):
         return lambda state: min(state)
-
-
-
-
-
-def _add_input_to_agent_value(agent_values:list, agent_index:int, input:int):
-    """
-    Adds the given item to agent #agent_index.
-    >>> _add_input_to_agent_value([11, 22, 33], 0, [55,66,77,1])
-    (66, 22, 33)
-    >>> _add_input_to_agent_value([11, 22, 33], 1, [55,66,77,1])
-    (11, 88, 33)
-    >>> _add_input_to_agent_value([11, 22, 33], 2, [55,66,77,1])
-    (11, 22, 110)
-    """
-    new_agent_values = list(agent_values)
-    new_agent_values[agent_index] = new_agent_values[agent_index] + input[agent_index]
-    return tuple(new_agent_values)
-
-
-def _add_input_to_bin(bins:list, agent_index:int, input:int):
-    """
-    Adds the given input integer to bin #agent_index in the given list of bins.
-    >>> _add_input_to_bin([[11,22], [33,44], [55,66]], 1, [55, 66, 77,1])
-    [[11, 22], [33, 44, 1], [55, 66]]
-    """
-    new_bins = list(bins)
-    item_index = input[-1]
-    new_bins[agent_index] = new_bins[agent_index]+[item_index]
-    return new_bins
 
 
 

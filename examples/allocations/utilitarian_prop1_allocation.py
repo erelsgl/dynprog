@@ -21,6 +21,8 @@ from dynprog.sequential import SequentialDynamicProgram
 import math, logging
 from typing import *
 
+from common import add_input_to_agent_value, add_input_to_bin, items_as_value_vectors
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,54 +47,8 @@ def utilitarian_prop1_value(valuation_matrix, propx=False):
     >>> utilitarian_prop1_value([[11],[22]],propx=True)
     22
     """
-    items = _items_as_value_vectors(valuation_matrix)
+    items = items_as_value_vectors(valuation_matrix)
     return PartitionDP(valuation_matrix, propx).max_value(items)
-
-    # num_of_agents   = len(valuation_matrix)
-    # num_of_items    = len(valuation_matrix[0])
-    # thresholds = [sum(valuation_matrix[i])/num_of_agents for i in range(num_of_agents)]
-    # logger.info("thresholds: %s", thresholds)
-    # def is_prop1(bundle_values:list,largest_value_owned_by_others:list)->bool:
-    #     return all([bundle_values[i] + largest_value_owned_by_others[i] >= thresholds[i] for i in range(num_of_agents)])
-    # def initial_states():  # returns (state,value) tuples
-    #     zero_values = num_of_agents*(0,)
-    #     initial_value_to_remove = math.inf if propx else 0
-    #     largest_value_owned_by_others = num_of_agents*(initial_value_to_remove,)
-    #     yield ( (0, zero_values, largest_value_owned_by_others), -math.inf)
-    # def neighbors (state:Tuple[int,tuple,tuple], value:int):   # returns (state,value) tuples
-    #     (item_index, bundle_values, largest_value_owned_by_others) = state
-    #     if item_index < num_of_items:
-    #         next_item_index = item_index+1
-    #         for agent_index in range(num_of_agents): # consider giving item item_index to agent agent_index
-    #             # Update my value
-    #             new_bundle_values = list(bundle_values)
-    #             new_bundle_values[agent_index] += valuation_matrix[agent_index][item_index]
-
-    #             # Update value owned by others
-    #             new_largest_value_owned_by_others = list(largest_value_owned_by_others)
-    #             for other_agent_index in range(num_of_agents):
-    #                 if other_agent_index!=agent_index:
-    #                     other_agent_value = valuation_matrix[other_agent_index][item_index]
-    #                     if propx:
-    #                         replace_item = other_agent_value < new_largest_value_owned_by_others[other_agent_index]
-    #                     else: # prop1
-    #                         replace_item = other_agent_value > new_largest_value_owned_by_others[other_agent_index]
-    #                     if replace_item:
-    #                         new_largest_value_owned_by_others[other_agent_index] = other_agent_value
-                
-    #             # Check PROP1:
-    #             state_value = -math.inf 
-    #             if next_item_index==num_of_items and is_prop1(new_bundle_values,new_largest_value_owned_by_others): 
-    #                 state_value = sum(new_bundle_values)
-
-    #             yield ((next_item_index, tuple(new_bundle_values), tuple(new_largest_value_owned_by_others)), state_value)
-    # def is_final_state(state):
-    #     (item_index, _, _) = state
-    #     return item_index==num_of_items
-    # value = dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
-    # if value==-math.inf:
-    #     raise ValueError("No PROP1 allocation -- this must be a bug")
-    # return value
 
 
 def utilitarian_prop1_allocation(valuation_matrix, propx=False):
@@ -121,63 +77,11 @@ def utilitarian_prop1_allocation(valuation_matrix, propx=False):
     >>> utilitarian_prop1_allocation([[37,20,34,12,71,17,55,97,79],[57,5,59,63,92,23,4,36,69],[16,3,41,42,68,47,60,39,17]], propx=True)
     (557, [[7, 8], [0, 2, 3, 4], [1, 5, 6]])
     """
-    items = _items_as_value_vectors(valuation_matrix)
+    items = items_as_value_vectors(valuation_matrix)
     (best_state,best_value,best_solution,num_of_states) = PartitionDP(valuation_matrix, propx).max_value_solution(items)
     if best_value==-math.inf:
         raise ValueError("No proportional allocation")
     return (best_value,best_solution)
-
-    num_of_agents   = len(valuation_matrix)
-    num_of_items    = len(valuation_matrix[0])
-    thresholds = [sum(valuation_matrix[i])/num_of_agents for i in range(num_of_agents)]
-    logger.info("thresholds: %s", thresholds)
-    def initial_states():  # returns (state,value,data) tuples
-        zero_values = num_of_agents*(0,)
-        empty_allocation = num_of_agents*([],)
-        initial_value_to_remove = math.inf if propx else 0
-        largest_value_owned_by_others = num_of_agents*(initial_value_to_remove,)
-        yield ( (0, zero_values, largest_value_owned_by_others), -math.inf, empty_allocation)
-    def neighbors (state:Tuple[int,tuple], value:int, allocation:list):   # returns (state,value,data) tuples
-        (item_index, bundle_values, largest_value_owned_by_others) = state
-        if item_index < num_of_items:
-            next_item_index = item_index+1
-            for agent_index in range(num_of_agents):
-
-                # Update my value
-                new_bundle_values = list(bundle_values)
-                new_bundle_values[agent_index] += valuation_matrix[agent_index][item_index]
-
-                # Update value owned by others
-                new_largest_value_owned_by_others = list(largest_value_owned_by_others)
-                for other_agent_index in range(num_of_agents):
-                    if other_agent_index!=agent_index:
-                        other_agent_value = valuation_matrix[other_agent_index][item_index]
-                        if propx:
-                            replace_item = other_agent_value < new_largest_value_owned_by_others[other_agent_index]
-                        else: # prop1
-                            replace_item = other_agent_value > new_largest_value_owned_by_others[other_agent_index]
-                        if replace_item:
-                            new_largest_value_owned_by_others[other_agent_index] = other_agent_value
-                
-                # Check PROP1:
-                state_value = -math.inf 
-                if next_item_index==num_of_items and is_prop1(new_bundle_values,new_largest_value_owned_by_others): 
-                    state_value = sum(new_bundle_values)
-
-                # Update allocation:
-                new_allocation = list(allocation)
-                new_allocation[agent_index] = new_allocation[agent_index] + [item_index]
-
-                yield ((next_item_index, tuple(new_bundle_values), tuple(new_largest_value_owned_by_others)), state_value, new_allocation)
-
-    def is_final_state(state):
-        (item_index, _, _) = state
-        return item_index==num_of_items
-    (state, value, data, num_of_states) = dynprog.general.max_value_solution(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
-    if value==-math.inf:
-        raise ValueError("No PROP1 allocation -- this must be a bug")
-    else:
-        return (value,data)
 
 
 
@@ -208,14 +112,14 @@ class PartitionDP(SequentialDynamicProgram):
     def transition_functions(self):
         return [
             lambda state, input, agent_index=agent_index: \
-                (_add_input_to_agent_value(state[0], agent_index, input) , \
+                (add_input_to_agent_value(state[0], agent_index, input) , \
                 _update_value_owned_by_others(state[1], agent_index, input[-1], self.valuation_matrix, self.propx) )
             for agent_index in range(self.num_of_agents)
         ]
 
     def construction_functions(self):
         return [
-            lambda solution,input,agent_index=agent_index: _add_input_to_bin(solution, agent_index, input)
+            lambda solution,input,agent_index=agent_index: add_input_to_bin(solution, agent_index, input[-1])
             for agent_index in range(self.num_of_agents)
         ]
 
@@ -227,21 +131,6 @@ class PartitionDP(SequentialDynamicProgram):
 
 
 
-def _add_input_to_agent_value(agent_values:list, agent_index:int, input:list):
-    """
-    :param input: a list of values: input[i] represents the value of the current item for agent i.
-
-    Adds the given item to agent #agent_index.
-    >>> _add_input_to_agent_value([11, 22, 33], 0, [55,66,77,1])
-    (66, 22, 33)
-    >>> _add_input_to_agent_value([11, 22, 33], 1, [55,66,77,1])
-    (11, 88, 33)
-    >>> _add_input_to_agent_value([11, 22, 33], 2, [55,66,77,1])
-    (11, 22, 110)
-    """
-    new_agent_values = list(agent_values)
-    new_agent_values[agent_index] = new_agent_values[agent_index] + input[agent_index]
-    return tuple(new_agent_values)
 
 
 def _update_value_owned_by_others(largest_value_owned_by_others:list, agent_index:int, item_index:int, valuation_matrix, propx=False):
@@ -268,26 +157,6 @@ def _update_value_owned_by_others(largest_value_owned_by_others:list, agent_inde
 
 
 
-def _add_input_to_bin(bins:list, agent_index:int, input:int):
-    """
-    Adds the given input integer to bin #agent_index in the given list of bins.
-    >>> _add_input_to_bin([[11,22], [33,44], [55,66]], 1, [55, 66, 77,1])
-    [[11, 22], [33, 44, 1], [55, 66]]
-    """
-    new_bins = list(bins)
-    item_index = input[-1]
-    new_bins[agent_index] = new_bins[agent_index]+[item_index]
-    return new_bins
-
-
-
-def _items_as_value_vectors(valuation_matrix):
-    num_of_agents   = len(valuation_matrix)
-    num_of_items    = len(valuation_matrix[0])
-    return [  # Each item is represented by a vector of values - a value for each agent. The last value is the item index.
-        [valuation_matrix[agent_index][item_index] for agent_index in range(num_of_agents)] + [item_index]
-        for item_index in range(num_of_items)
-    ]
 
 
 

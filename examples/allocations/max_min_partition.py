@@ -16,6 +16,8 @@ from dynprog.sequential import SequentialDynamicProgram
 
 from typing import *
 
+from common import add_input_to_bin_sum, add_input_to_bin
+
 
 def max_min_value(items:List[int], num_of_bins:int):
     """
@@ -69,13 +71,13 @@ class PartitionDP(SequentialDynamicProgram):
    
     def transition_functions(self):
         return [
-            lambda state, input, bin_index=bin_index: _add_input_to_bin_sum(state, bin_index, input)
+            lambda state, input, bin_index=bin_index: add_input_to_bin_sum(state, bin_index, input)
             for bin_index in range(self.num_of_bins)
         ]
 
     def construction_functions(self):
         return [
-            lambda solution,input,bin_index=bin_index: _add_input_to_bin(solution, bin_index, input)
+            lambda solution,input,bin_index=bin_index: add_input_to_bin(solution, bin_index, input)
             for bin_index in range(self.num_of_bins)
         ]
 
@@ -83,34 +85,6 @@ class PartitionDP(SequentialDynamicProgram):
     def value_function(self):
         return lambda state: min(state)
 
-
-
-
-def _add_input_to_bin_sum(bin_sums:list, bin_index:int, input:int):
-    """
-    Adds the given input integer to bin #bin_index in the given list of bins.
-    >>> _add_input_to_bin_sum([11, 22, 33], 0, 77)
-    (88, 22, 33)
-    >>> _add_input_to_bin_sum([11, 22, 33], 1, 77)
-    (11, 99, 33)
-    >>> _add_input_to_bin_sum([11, 22, 33], 2, 77)
-    (11, 22, 110)
-    """
-    new_bin_sums = list(bin_sums)
-    new_bin_sums[bin_index] = new_bin_sums[bin_index] + input
-    return tuple(new_bin_sums)
-
-
-
-def _add_input_to_bin(bins:list, bin_index:int, input:int):
-    """
-    Adds the given input integer to bin #bin_index in the given list of bins.
-    >>> _add_input_to_bin([[11,22], [33,44], [55,66]], 1, 77)
-    [[11, 22], [33, 44, 77], [55, 66]]
-    """
-    new_bins = list(bins)
-    new_bins[bin_index] = new_bins[bin_index]+[input]
-    return new_bins
 
 
 
