@@ -76,8 +76,6 @@ def _items_as_value_vectors(valuation_matrix):
     ]
 
 
-
-
 #### Dynamic program definition:
 
 class PartitionDP(SequentialDynamicProgram):
@@ -119,8 +117,10 @@ class PartitionDP(SequentialDynamicProgram):
 
 
 
-def _add_input_to_agent_value(agent_values:list, agent_index:int, input:int):
+def _add_input_to_agent_value(agent_values:list, agent_index:int, input:list):
     """
+    :param input: a list of values: input[i] represents the value of the current item for agent i.
+
     Adds the given item to agent #agent_index.
     >>> _add_input_to_agent_value([11, 22, 33], 0, [55,66,77,1])
     (66, 22, 33)
