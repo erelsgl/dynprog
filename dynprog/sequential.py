@@ -73,12 +73,16 @@ class SequentialDynamicProgram(ABC):
             }
             # logger.info("Processed input %d (%s) and added %d states: %s.", input_index, input, len(next_states), next_states)
             logger.info("  Processed input %d (%s) and added %d states.", input_index, input, len(next_states))
+            # logger.info("  Next states: %s", next_states)
             num_of_processed_states += len(next_states)
             current_states = next_states
         logger.info("Processed %d states.", num_of_processed_states)
         if len(current_states)==0:
             raise ValueError("No final states!")
-        return max([value_function(state) for state in current_states])
+        best_final_state = max(current_states, key=lambda state: value_function(state))
+        best_final_state_value = value_function(best_final_state)
+        logger.info("Best final state: %s, value: %s",best_final_state, best_final_state_value)
+        return best_final_state_value
 
 
 

@@ -8,7 +8,11 @@ Common routines for dynamic programs finding fair allocations.
 def items_as_value_vectors(valuation_matrix):
     """
     Convert a valuation matrix (an input to a fair division algorithm) into a list of value-vectors.
-    Each value-vector represents an item.
+    Each value-vector v represents an item: v[i] is the value of the item for agent i (i = 0,...,n-1).
+    The last element, v[n], is the item index.
+
+    >>> items_as_value_vectors([[11,22,33],[44,55,66]])
+    [[11, 44, 0], [22, 55, 1], [33, 66, 2]]
     """
     num_of_agents   = len(valuation_matrix)
     num_of_items    = len(valuation_matrix[0])
