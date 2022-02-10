@@ -6,6 +6,13 @@ Implements a generic routine for sequential dynamic programming, based on the "S
 
 > Gerhard J. Woeginger, [When Does a Dynamic Programming Formulation Guarantee the Existence of a FPTAS?](https://pubsonline.informs.org/doi/abs/10.1287/ijoc.12.1.57.11901), INFORMS journal of computing, 2000.
 
+## Installation
+
+    pip install dynprog
+
+
+## Usage
+
 To define a dynamic program, extend the class `SequentialDynamicProgram` and override the methods:
 
 * `initial_states` - returns a list of states where the search for a solution starts.
