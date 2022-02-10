@@ -8,5 +8,5 @@ import pathlib, logging
 
 logger = logging.getLogger(__name__)
 
-PARENT = pathlib.Path(__file__).parent.parent
-__version__ = (PARENT / "VERSION").read_text().strip()
+HERE = pathlib.Path(__file__).parent
+__version__ = (HERE / "VERSION").read_text().strip()
