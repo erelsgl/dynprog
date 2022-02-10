@@ -9,16 +9,19 @@ The states are tuples (i,j,b), where i,j are indices and b is boolean.
 Each pair (i,j) represents the optimal strategy for picking from the sequence i, ..., j-1.
 The boolean value b is "True" if it is my turn, "False" if it is the opponent's turn.
 
+NOTE: This example uses an old, function-based interface.
+It is better to use the new, class-based interface, in sequential.py.
+
 Programmer: Erel Segal-Halevi
 Since: 2021-11
 """
 
-import dynprog
+import dynprog.sequential_func
 from typing import *
 from numbers import Number
 
 
-def max_value(coins: List[Number], first:bool):
+def max_value(coins: List[Number], first: bool):
     """
     Returns the maximum value that the player can win from the given sequence of coins.
     `first` is true iff the current player plays first.
@@ -33,32 +36,46 @@ def max_value(coins: List[Number], first:bool):
     8
     """
     num_coins = len(coins)
+
     def initial_states():  # returns (state,value) tuples
-        for i in range(num_coins): yield ((i,i,first if num_coins%2==0 else not first), 0)
-    def neighbors (state:Tuple[int,int], value:int):   # returns (state,value) tuples
-        (i,j,my_turn) = state    # indices: represent the row of coins between i and j-1.
+        for i in range(num_coins):
+            yield ((i, i, first if num_coins % 2 == 0 else not first), 0)
+
+    def neighbors(
+        state: Tuple[int, int], value: int
+    ):  # returns (state,value) tuples
+        (
+            i,
+            j,
+            my_turn,
+        ) = state  # indices: represent the row of coins between i and j-1.
         if my_turn:
-            if i-1>=0:   # check the state (i-1,j)
-                yield ((i-1,j,False), -value)
-            if j+1<=num_coins:
-                yield ((i,j+1,False), -value)
+            if i - 1 >= 0:  # check the state (i-1,j)
+                yield ((i - 1, j, False), -value)
+            if j + 1 <= num_coins:
+                yield ((i, j + 1, False), -value)
         else:
-            if i-1>=0:   # check the state (i-1,j)
-                yield ((i-1,j,True), -value + coins[i-1])
-            if j+1<=num_coins:
-                yield ((i,j+1,True), -value + coins[j])
+            if i - 1 >= 0:  # check the state (i-1,j)
+                yield ((i - 1, j, True), -value + coins[i - 1])
+            if j + 1 <= num_coins:
+                yield ((i, j + 1, True), -value + coins[j])
+
     def final_states():
-        yield (0,num_coins,first)
-    value = dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, final_states=final_states)
+        yield (0, num_coins, first)
+
+    value = dynprog.sequential_func.max_value(
+        initial_states=initial_states,
+        neighbors=neighbors,
+        final_states=final_states,
+    )
     return value if first else -value
 
 
-if __name__=="__main__":
-    import sys, logging
-    dynprog.general.logger.addHandler(logging.StreamHandler(sys.stdout))
-    # dynprog.logger.setLevel(logging.INFO)
+if __name__ == "__main__":
+    import doctest, logging
 
-    import doctest
-    (failures,tests) = doctest.testmod(report=True)
-    print ("{} failures, {} tests".format(failures,tests))
+    dynprog.logger.addHandler(logging.StreamHandler())
+    dynprog.logger.setLevel(logging.WARNING)
 
+    (failures, tests) = doctest.testmod(report=True)
+    print("{} failures, {} tests".format(failures, tests))

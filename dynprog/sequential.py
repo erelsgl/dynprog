@@ -12,15 +12,12 @@ Since: 2021-12
 
 from typing import *
 from dataclasses import dataclass
+from dynprog import logger
 
 Input = List[int]
 State = List[int]
 Value = float
 Solution = Any
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 from abc import ABC, abstractmethod
 
@@ -205,7 +202,7 @@ class SequentialDynamicProgram(ABC):
 
 
 if __name__ == "__main__":
-    import sys
+    import sys, logging
 
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.INFO)

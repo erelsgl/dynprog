@@ -4,6 +4,9 @@ Generic dynamic programming in the iterative method.
 Programmer: Erel Segal-Halevi.
 Since: 2021-11.
 """
+import pathlib, logging
 
-import dynprog.sequential as sequential
-import dynprog.general as general
+logger = logging.getLogger(__name__)
+
+PARENT = pathlib.Path(__file__).parent.parent
+__version__ = (PARENT / "VERSION").read_text().strip()

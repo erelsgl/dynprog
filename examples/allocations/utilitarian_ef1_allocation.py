@@ -18,7 +18,11 @@ import dynprog, math, logging
 from typing import *
 from dynprog.sequential import SequentialDynamicProgram
 
-from common import add_input_to_agent_value, add_input_to_bin, items_as_value_vectors
+from common import (
+    add_input_to_agent_value,
+    add_input_to_bin,
+    items_as_value_vectors,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +31,7 @@ def utilitarian_ef1_value(valuation_matrix, efx=False):
     """
     Returns the maximum utilitarian value in a ef1 allocation - does *not* return the partition itself.
 
-    >>> dynprog.general.logger.setLevel(logging.WARNING)
+    >>> dynprog.logger.setLevel(logging.WARNING)
     >>> utilitarian_ef1_value([[11,0,11],[33,44,55]])
     110.0
     >>> utilitarian_ef1_value([[11,0,11],[33,44,55]],efx=True)
@@ -40,7 +44,7 @@ def utilitarian_ef1_value(valuation_matrix, efx=False):
     88.0
     >>> utilitarian_ef1_value([[11,0,11,11],[0,11,11,11],[33,33,33,33]],efx=True)
     88.0
-    >>> utilitarian_ef1_value([[11],[22]]) 
+    >>> utilitarian_ef1_value([[11],[22]])
     22.0
     >>> utilitarian_ef1_value([[11],[22]],efx=True)
     22.0
@@ -52,59 +56,9 @@ def utilitarian_ef1_value(valuation_matrix, efx=False):
     items = items_as_value_vectors(valuation_matrix)
     return PartitionDP(valuation_matrix, efx).max_value(items)
 
-    num_of_agents   = len(valuation_matrix)
-    num_of_items    = len(valuation_matrix[0])
-    def is_ef1(bundle_differences:List[List], largest_value_owned_by_others:List[List])->bool:
-        return all([bundle_differences[i][j] + largest_value_owned_by_others[i][j]>=0 
-            for i in range(num_of_agents) for j in range(num_of_agents)])
-    def initial_states():  # returns (state,value) tuples
-        zero_values = num_of_agents * (num_of_agents*(0,),)
-        initial_value_to_remove = math.inf if efx else 0
-        largest_value_owned_by_others = num_of_agents * (num_of_agents*(initial_value_to_remove,),)
-        yield ( (0, zero_values, largest_value_owned_by_others), -math.inf)
-    def neighbors (state:Tuple[int,tuple,tuple], value:int):   # returns (state,value) tuples
-        (item_index, bundle_differences, largest_value_owned_by_others) = state
-        if item_index < num_of_items:
-            next_item_index = item_index+1
-            for agent_index in range(num_of_agents): # consider giving item item_index to agent agent_index
-                # Update bundle differences
-                new_bundle_differences = [list(d) for d in bundle_differences]
-                for other_agent_index in range(num_of_agents):
-                    if other_agent_index==agent_index: continue
-                    new_bundle_differences[agent_index][other_agent_index] += valuation_matrix[agent_index][item_index]
-                    new_bundle_differences[other_agent_index][agent_index] -= valuation_matrix[other_agent_index][item_index]
-                new_bundle_differences = tuple((tuple(d) for d in new_bundle_differences))
-
-                # Update value owned by others
-                new_largest_value_owned_by_others = [list(d) for d in largest_value_owned_by_others]
-                for other_agent_index in range(num_of_agents):
-                    if other_agent_index==agent_index: continue
-                    other_agent_value = valuation_matrix[other_agent_index][item_index]
-                    if efx:
-                        replace_item = other_agent_value < new_largest_value_owned_by_others[other_agent_index][agent_index]
-                    else: # ef1
-                        replace_item = other_agent_value > new_largest_value_owned_by_others[other_agent_index][agent_index]
-                    if replace_item:
-                        new_largest_value_owned_by_others[other_agent_index][agent_index] = other_agent_value
-                new_largest_value_owned_by_others = tuple((tuple(d) for d in new_largest_value_owned_by_others))
-                
-                # Check ef1:
-                state_value = -math.inf 
-                if next_item_index==num_of_items and is_ef1(new_bundle_differences,new_largest_value_owned_by_others): 
-                    state_value = sum(map(sum,new_bundle_differences))
-                yield ((next_item_index, new_bundle_differences, new_largest_value_owned_by_others), state_value)
-    def is_final_state(state):
-        (item_index, _, _) = state
-        return item_index==num_of_items
-    value = dynprog.general.max_value(initial_states=initial_states, neighbors=neighbors, is_final_state=is_final_state)
-    if value==-math.inf:
-        raise ValueError("No EF1 allocation -- this must be a bug")
-    return (value + sum(map(sum,valuation_matrix))) / num_of_agents
-
-
-
 
 #### Dynamic program definition:
+
 
 class PartitionDP(SequentialDynamicProgram):
 
@@ -114,44 +68,69 @@ class PartitionDP(SequentialDynamicProgram):
 
     def __init__(self, valuation_matrix, efx=False):
         num_of_agents = self.num_of_agents = len(valuation_matrix)
-        self.thresholds = [sum(valuation_matrix[i])/num_of_agents for i in range(num_of_agents)]
+        self.thresholds = [
+            sum(valuation_matrix[i]) / num_of_agents
+            for i in range(num_of_agents)
+        ]
         self.valuation_matrix = valuation_matrix
-        self.sum_valuation_matrix =  sum(map(sum,valuation_matrix))
+        self.sum_valuation_matrix = sum(map(sum, valuation_matrix))
         self.efx = efx
 
     def initial_states(self):
-        zero_differences = self.num_of_agents * (self.num_of_agents*(0,),)
+        zero_differences = self.num_of_agents * (self.num_of_agents * (0,),)
         # print("zero_differences",zero_differences)
         initial_value_to_remove = math.inf if self.efx else 0
-        largest_value_owned_by_others = self.num_of_agents * (self.num_of_agents*(initial_value_to_remove,),)
+        largest_value_owned_by_others = self.num_of_agents * (
+            self.num_of_agents * (initial_value_to_remove,),
+        )
         return {(zero_differences, largest_value_owned_by_others)}
 
     def initial_solution(self):
-        empty_bundles = [ [] for _ in range(self.num_of_agents)]
+        empty_bundles = [[] for _ in range(self.num_of_agents)]
         return empty_bundles
-   
+
     def transition_functions(self):
         return [
-            lambda state, input, agent_index=agent_index: (\
-                _update_bundle_differences(state[0], agent_index, input), \
-                _update_value_owned_by_others(state[1], agent_index, input[-1], self.valuation_matrix, self.efx) 
+            lambda state, input, agent_index=agent_index: (
+                _update_bundle_differences(state[0], agent_index, input),
+                _update_value_owned_by_others(
+                    state[1],
+                    agent_index,
+                    input[-1],
+                    self.valuation_matrix,
+                    self.efx,
+                ),
             )
             for agent_index in range(self.num_of_agents)
         ]
 
     def construction_functions(self):
         return [
-            lambda solution,input,agent_index=agent_index: add_input_to_bin(solution, agent_index, input[-1])
+            lambda solution, input, agent_index=agent_index: add_input_to_bin(
+                solution, agent_index, input[-1]
+            )
             for agent_index in range(self.num_of_agents)
         ]
 
     def value_function(self):
-        return lambda state: (sum(map(sum,state[0]))+self.sum_valuation_matrix) / self.num_of_agents if self._is_ef1(state[0],state[1]) else -math.inf
-    
-    def _is_ef1(self, bundle_differences:list, largest_value_owned_by_others:list)->bool:
-        return all([bundle_differences[i][j] + largest_value_owned_by_others[i][j]>=0 
-            for i in range(self.num_of_agents) for j in range(self.num_of_agents)])
+        return (
+            lambda state: (sum(map(sum, state[0])) + self.sum_valuation_matrix)
+            / self.num_of_agents
+            if self._is_ef1(state[0], state[1])
+            else -math.inf
+        )
 
+    def _is_ef1(
+        self, bundle_differences: list, largest_value_owned_by_others: list
+    ) -> bool:
+        return all(
+            [
+                bundle_differences[i][j] + largest_value_owned_by_others[i][j]
+                >= 0
+                for i in range(self.num_of_agents)
+                for j in range(self.num_of_agents)
+            ]
+        )
 
 
 def _update_bundle_differences(bundle_differences, agent_index, item_values):
@@ -165,15 +144,27 @@ def _update_bundle_differences(bundle_differences, agent_index, item_values):
     num_of_agents = len(bundle_differences)
     new_bundle_differences = [list(d) for d in bundle_differences]
     for other_agent_index in range(num_of_agents):
-        if other_agent_index==agent_index: continue
-        new_bundle_differences[agent_index][other_agent_index] += item_values[agent_index]
-        new_bundle_differences[other_agent_index][agent_index] -= item_values[other_agent_index]
+        if other_agent_index == agent_index:
+            continue
+        new_bundle_differences[agent_index][other_agent_index] += item_values[
+            agent_index
+        ]
+        new_bundle_differences[other_agent_index][agent_index] -= item_values[
+            other_agent_index
+        ]
     new_bundle_differences = tuple((tuple(d) for d in new_bundle_differences))
     return new_bundle_differences
 
-def _update_value_owned_by_others(largest_value_owned_by_others:list, agent_index:int, item_index:int, valuation_matrix, efx=False):
+
+def _update_value_owned_by_others(
+    largest_value_owned_by_others: list,
+    agent_index: int,
+    item_index: int,
+    valuation_matrix,
+    efx=False,
+):
     """
-    Update the matrix of largest-value-owned-by-others when 
+    Update the matrix of largest-value-owned-by-others when
     the item #item_index is given to the agent #agent_index.
     >>> _update_value_owned_by_others([[0,0,0],[0,0,0],[0,0,0]], 0, 0, [[55,66,77],[88,99,11],[22,33,44]])
     ((0, 0, 0), (88, 0, 0), (22, 0, 0))
@@ -181,38 +172,56 @@ def _update_value_owned_by_others(largest_value_owned_by_others:list, agent_inde
     ((0, 20, 30), (88, 0, 60), (70, 80, 0))
     """
     num_of_agents = len(largest_value_owned_by_others)
-    new_largest_value_owned_by_others = [list(d) for d in largest_value_owned_by_others]
+    new_largest_value_owned_by_others = [
+        list(d) for d in largest_value_owned_by_others
+    ]
     for other_agent_index in range(num_of_agents):
-        if other_agent_index==agent_index: continue
+        if other_agent_index == agent_index:
+            continue
         other_agent_value = valuation_matrix[other_agent_index][item_index]
         if efx:
-            replace_item = other_agent_value < new_largest_value_owned_by_others[other_agent_index][agent_index]
-        else: # ef1
-            replace_item = other_agent_value > new_largest_value_owned_by_others[other_agent_index][agent_index]
+            replace_item = (
+                other_agent_value
+                < new_largest_value_owned_by_others[other_agent_index][
+                    agent_index
+                ]
+            )
+        else:  # ef1
+            replace_item = (
+                other_agent_value
+                > new_largest_value_owned_by_others[other_agent_index][
+                    agent_index
+                ]
+            )
         if replace_item:
-            new_largest_value_owned_by_others[other_agent_index][agent_index] = other_agent_value
-    new_largest_value_owned_by_others = tuple((tuple(d) for d in new_largest_value_owned_by_others))
+            new_largest_value_owned_by_others[other_agent_index][
+                agent_index
+            ] = other_agent_value
+    new_largest_value_owned_by_others = tuple(
+        (tuple(d) for d in new_largest_value_owned_by_others)
+    )
     return new_largest_value_owned_by_others
 
 
+if __name__ == "__main__":
+    import sys, doctest, random
 
-
-
-
-if __name__=="__main__":
-    import sys
-    dynprog.sequential.logger.addHandler(logging.StreamHandler(sys.stdout))
-    dynprog.sequential.logger.setLevel(logging.WARNING)
+    dynprog.logger.addHandler(logging.StreamHandler(sys.stdout))
+    dynprog.logger.setLevel(logging.WARNING)
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.WARNING)
 
-    import doctest
-    (failures,tests) = doctest.testmod(report=True)
-    print ("{} failures, {} tests".format(failures,tests))
+    (failures, tests) = doctest.testmod(report=True)
+    print("{} failures, {} tests".format(failures, tests))
 
-    dynprog.sequential.logger.setLevel(logging.WARNING)
-    import numpy as np
-    valuation_matrix = np.random.randint(0,9, [3,10])   # ~ 80k states
-    print("valuation_matrix:\n",valuation_matrix)
-    print("Utilitarian within EF1: ",utilitarian_ef1_value(valuation_matrix))
-    print("Utilitarian within EFx: ",utilitarian_ef1_value(valuation_matrix,efx=True))
+    dynprog.logger.setLevel(logging.INFO)
+
+    valuation_matrix = [
+        [random.randint(0, 9) for _ in range(10)] for _ in range(3)
+    ]  # ~ 80k states
+    print("valuation_matrix:\n", valuation_matrix)
+    print("Utilitarian within EF1: ", utilitarian_ef1_value(valuation_matrix))
+    print(
+        "Utilitarian within EFx: ",
+        utilitarian_ef1_value(valuation_matrix, efx=True),
+    )
