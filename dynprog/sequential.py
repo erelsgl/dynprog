@@ -82,14 +82,12 @@ class SequentialDynamicProgram(ABC):
                 for state in current_states
                 if h(state, input)
             }
-            # logger.info("Processed input %d (%s) and added %d states: %s.", input_index, input, len(next_states), next_states)
             logger.info(
                 "  Processed input %d (%s) and added %d states.",
                 input_index,
                 input,
                 len(next_states),
             )
-            # logger.info("  Next states: %s", next_states)
             num_of_processed_states += len(next_states)
             current_states = next_states
         logger.info("Processed %d states.", num_of_processed_states)
@@ -111,9 +109,8 @@ class SequentialDynamicProgram(ABC):
         This function returns both the maximum value and the corresponding optimum solution.
         :param inputs: the list of inputs.
         """
-        inputs = list(
-            inputs
-        )  # allow to iterate twice. See https://stackoverflow.com/q/70381559/827927
+        inputs = list(inputs)
+        # allow to iterate twice. See https://stackoverflow.com/q/70381559/827927
 
         @dataclass
         class StateRecord:
