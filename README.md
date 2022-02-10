@@ -1,6 +1,7 @@
-![Tox result](https://github.com/erelsgl/dynprog/workflows/tox/badge.svg)
-
 # dynprog
+
+![Tox result](https://github.com/erelsgl/dynprog/workflows/tox/badge.svg)
+[![PyPI version](https://badge.fury.io/py/dynprog.svg)](https://badge.fury.io/py/dynprog)
 
 Implements a generic routine for sequential dynamic programming, based on the "Simple DP" framework defined in:
 
